@@ -1,0 +1,20 @@
+﻿  TMethodDivByThree.cpp
+D:\materials\projects\GlOpt\GlOpt\TMethodDivByThree.cpp(66,31): warning C4244: аргумент: преобразование "_Ty" в "const _Ty", возможна потеря данных
+          with
+          [
+              _Ty=CoordinateValue
+          ]
+          and
+          [
+              _Ty=uint
+          ]
+D:\materials\projects\GlOpt\GlOpt\TMethodDivByThree.cpp(73,31): warning C4244: аргумент: преобразование "_Ty" в "const _Ty", возможна потеря данных
+          with
+          [
+              _Ty=CoordinateValue
+          ]
+          and
+          [
+              _Ty=uint
+          ]
+  GlOpt.vcxproj -> D:\materials\projects\GlOpt\Debug\GlOpt.exe
