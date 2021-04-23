@@ -59,22 +59,63 @@ bool TMethodDivByThree::divideInterval(const uint& id_divHyp) {
 
 	if (div.increase_div_tag(F_divide_axis) == false) return false;
 	uint pos = div.get_div_tag(F_divide_axis);
-	TPoint point_u;
-	point_u.F_idThis = get_new_id();
-	point_u.F_idCoords = get_id_coord();
-	for (uint i = 0; i < F_dimension; ++i)
-		F_coords.push_back(coord_b[i]);
-	F_coords[point_u.F_idCoords + F_divide_axis] = HYPER_INTERVAL_SIDE_LENGTHS[MAX_EXPONENT_THREE - pos];
 
-	TPoint point_v;
-	point_v.F_idThis = get_new_id();
-	point_v.F_idCoords = get_id_coord();
-	for (uint i = 0; i < F_dimension; ++i)
-		F_coords.push_back(coord_a[i]);
-	F_coords[point_v.F_idCoords + F_divide_axis] = HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[MAX_EXPONENT_THREE - pos];
+	// порождаем точку u от точки b
+	uint new_id_u = does_point_exist(point_b, HYPER_INTERVAL_SIDE_LENGTHS[MAX_EXPONENT_THREE - pos], false);
+	// если точка не нашлась, то порождаем новую
+	if (new_id_u == F_points.size()) {
+		TPoint point_u;
+		point_u.F_idThis = new_id_u;
+		point_u.F_idCoords = get_id_coord();
+		for (uint i = 0; i < F_dimension; ++i)
+			F_coords.push_back(coord_b[i]);
+		F_coords[point_u.F_idCoords + F_divide_axis] = HYPER_INTERVAL_SIDE_LENGTHS[MAX_EXPONENT_THREE - pos];
+		F_points.push_back(point_u);
+	}
 
+	// порождаем точку v от точки a
+	uint new_id_v = does_point_exist(point_a, HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[MAX_EXPONENT_THREE - pos], false);
+	if (new_id_v == F_points.size()) {
+		TPoint point_v;
+		point_v.F_idThis = new_id_v;
+		point_v.F_idCoords = get_id_coord();
+		for (uint i = 0; i < F_dimension; ++i)
+			F_coords.push_back(coord_a[i]);
+		F_coords[point_v.F_idCoords + F_divide_axis] = HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[MAX_EXPONENT_THREE - pos];
+		F_points.push_back(point_v);
+	}
+
+	div.increase_division();
+	fillIntervals(div, new_id_u, new_id_v);
 	F_divide_axis = (++F_divide_axis) % F_dimension;
 	return true;
+}
+
+void TMethodDivByThree::fillIntervals(THyperinterval& parent, const uint& id_u, const uint& id_v) {
+	TPoint& point_u = F_points[id_u];
+	TPoint& point_v = F_points[id_v];
+
+	THyperinterval new_hyp_2 = parent;
+	THyperinterval new_hyp_3 = parent;
+
+	parent.set_idPointB(id_u);
+	parent.set_idB(point_u.F_idCoords);
+	parent.set_idEvaluationsB(point_u.F_idEvaluations);
+
+	new_hyp_2.set_idThis(get_new_interval());
+	new_hyp_2.set_idPointA(id_u);
+	new_hyp_2.set_idPointB(id_v);
+	new_hyp_2.set_idA(point_u.F_idCoords);
+	new_hyp_2.set_idB(point_v.F_idCoords);
+	new_hyp_2.set_idEvaluationsA(point_u.F_idEvaluations);
+	new_hyp_2.set_idEvaluationsB(point_v.F_idEvaluations);
+	F_intervals.push_back(new_hyp_2);
+
+	new_hyp_3.set_idThis(get_new_interval());
+	new_hyp_3.set_idPointA(id_v);
+	new_hyp_3.set_idA(point_v.F_idCoords);
+	new_hyp_3.set_idEvaluationsA(point_v.F_idEvaluations);
+	F_intervals.push_back(new_hyp_3);
 }
 
 uint TMethodDivByThree::get_new_id() {
@@ -113,9 +154,16 @@ uint TMethodDivByThree::does_point_exist(TPoint& parent, const uint& des_val, bo
 			uint pos = point.F_idCoords + F_divide_axis;
 			if (F_coords[pos] == des_val) return *it;
 			if (F_coords[pos] < des_val) {
-				parent.inc_coords[F_divide_axis].insert(it, get_new_id());
-				return -1;
+				uint new_id = get_new_id();
+				parent.inc_coords[F_divide_axis].insert(it, new_id);
+				return new_id;
 			}
+		}
+
+		if (beg == end) {
+			uint new_id = get_new_id();
+			parent.inc_coords[F_divide_axis].push_back(new_id);
+			return new_id;
 		}
 	}
 	else {
@@ -126,7 +174,17 @@ uint TMethodDivByThree::does_point_exist(TPoint& parent, const uint& des_val, bo
 			TPoint& point = F_points[*it];
 			uint pos = point.F_idCoords + F_divide_axis;
 			if (F_coords[pos] == des_val) return *it;
+			if (F_coords[pos] < des_val) {
+				uint new_id = get_new_id();
+				parent.inc_coords[F_divide_axis].insert(it, new_id);
+				return new_id;
+			}
+		}
+
+		if (beg == end) {
+			uint new_id = get_new_id();
+			parent.inc_coords[F_divide_axis].push_back(new_id);
+			return new_id;
 		}
 	}
-	return get_new_id();
 }

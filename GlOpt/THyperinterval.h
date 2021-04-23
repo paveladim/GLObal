@@ -39,6 +39,8 @@ public:
 		F_queue_depth = out_depth;
 	} 
 
+	THyperinterval& operator=(const THyperinterval& out_interval);
+
 	void increase_division(); // увеличить число делений
 	uint get_idThis();
 	uint get_idPointA();

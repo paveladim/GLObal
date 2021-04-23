@@ -41,14 +41,13 @@ public:
 
     virtual void createFirstInterval(); // создать самый первый гиперинтервал
     virtual bool divideInterval(const uint& id_divHyp); // поделить гиперинтервал
+    virtual void fillIntervals(THyperinterval& parent, const uint& id_u, const uint& id_v);
     // virtual uint compute_new_coord(const uint& out_id, bool f); // сгенерировать новые координаты
     uint get_new_id(); // выдача идентификатора точки
     uint get_id_coord(); // получить итендификатор для координат
     uint get_new_interval(); // выдача идентификатора гиперинтервала
     void delete_point(); // удалить идентификатор точки
     void delete_hyperinterval(); // удалить итендификатор гиперинтервала
-    // bool get_coord(const uint& out_id_a); // считывание точки из базы данных
-    // bool get_coords(const uint& out_id_a, const uint& out_id_b); // считывание точек из базы данных
 
     uint does_point_exist(TPoint& parent, const uint& des_val, bool f); // существует ли точка в базе данных уже
 };

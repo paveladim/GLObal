@@ -13,6 +13,28 @@ THyperinterval::THyperinterval() : F_idThis(0), F_idPointA(0), F_idPointB(0), F_
 	F_evaluations.resize(F_constraints + 1);
 }
 
+THyperinterval& THyperinterval::operator=(const THyperinterval& out_interval) {
+	if (this == &out_interval) return *this;
+	uint F_idThis; // итендификатор гиперинтервала
+
+	F_idPointA = out_interval.F_idPointA; 
+	F_idPointB = out_interval.F_idPointB;
+
+	F_idA = out_interval.F_idA; 
+	F_idB = out_interval.F_idB; 
+
+	F_idEvaluationsA = out_interval.F_idEvaluationsA; 
+	F_idEvaluationsB = out_interval.F_idEvaluationsB; 
+
+	F_divisions = out_interval.F_divisions; 
+	F_characteristic = out_interval.F_characteristic; 
+	F_diagonal = out_interval.F_divisions; 
+	F_evaluations = out_interval.F_evaluations;
+	F_division_tags = out_interval.F_division_tags;
+
+	return *this;
+}
+
 void THyperinterval::increase_division() {
 	++F_divisions;
 }
