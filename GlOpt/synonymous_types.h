@@ -6,6 +6,7 @@
 #include <queue>
 #include <list>
 #include <functional>
+#include <cmath>
 
 using uint = unsigned int;
 using EncodedCoordinate = uint;

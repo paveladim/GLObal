@@ -67,6 +67,10 @@ uint THyperinterval::get_idEvaluationsB() {
 	return F_idEvaluationsB;
 }
 
+double THyperinterval::get_diagonal() {
+	return F_diagonal;
+}
+
 void THyperinterval::set_idThis(const uint& out_idThis) {
 	F_idThis = out_idThis;
 }
@@ -97,6 +101,10 @@ void THyperinterval::set_idEvaluationsB(const uint& out_idEvalB) {
 
 void THyperinterval::set_characteristic(const double& out_charact) {
 	F_characteristic = out_charact;
+}
+
+void THyperinterval::set_diagonal(const double& value) {
+	F_diagonal = value;
 }
 
 double THyperinterval::get_characteristic() {

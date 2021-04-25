@@ -1,5 +1,8 @@
 #include "TMethodDivByThree.h"
 
+uint TPoint::F_dimension;
+uint TPoint::F_constraints;
+
 TMethodDivByThree::TMethodDivByThree(const uint& out_dim, const uint& out_constr, const uint& depth, const double& out_eps,
 	const uint& max_gen_points, const uint& max_gen_interv, TProblem& out_prob) : F_dimension(out_dim), 
 	F_queueDepth(depth), F_constraints(out_constr), F_eps(out_eps), max_generated_points(max_gen_points), 
@@ -10,6 +13,9 @@ TMethodDivByThree::TMethodDivByThree(const uint& out_dim, const uint& out_constr
 	F_current_minimum = 0.0;
 	coord_a.resize(F_dimension);
 	coord_b.resize(F_dimension);
+
+	TPoint::F_dimension = out_dim;
+	TPoint::F_constraints = out_constr;
 }
 
 void TMethodDivByThree::createFirstInterval() {
@@ -101,6 +107,7 @@ void TMethodDivByThree::fillIntervals(THyperinterval& parent, const uint& id_u, 
 	parent.set_idPointB(id_u);
 	parent.set_idB(point_u.F_idCoords);
 	parent.set_idEvaluationsB(point_u.F_idEvaluations);
+	compute_diagonal(parent.get_idThis());
 
 	new_hyp_2.set_idThis(get_new_interval());
 	new_hyp_2.set_idPointA(id_u);
@@ -110,13 +117,50 @@ void TMethodDivByThree::fillIntervals(THyperinterval& parent, const uint& id_u, 
 	new_hyp_2.set_idEvaluationsA(point_u.F_idEvaluations);
 	new_hyp_2.set_idEvaluationsB(point_v.F_idEvaluations);
 	F_intervals.push_back(new_hyp_2);
+	compute_diagonal(new_hyp_2.get_idThis());
 
 	new_hyp_3.set_idThis(get_new_interval());
 	new_hyp_3.set_idPointA(id_v);
 	new_hyp_3.set_idA(point_v.F_idCoords);
 	new_hyp_3.set_idEvaluationsA(point_v.F_idEvaluations);
 	F_intervals.push_back(new_hyp_3);
+	compute_diagonal(new_hyp_3.get_idThis());
 }
+
+void TMethodDivByThree::compute_diagonal(const uint& id_Hyp) {
+	THyperinterval& hyp = F_intervals[id_Hyp];
+	uint pos_coord_a = hyp.get_idA();
+	uint pos_coord_b = hyp.get_idB();
+
+	double diagonal = 0.0;
+	double temp;
+	for (uint i = 0; i < F_dimension; ++i) {
+		temp = (double)F_coords[pos_coord_b + i] - (double)F_coords[pos_coord_a + i];
+		temp = fabs(temp);
+		diagonal = diagonal + temp * temp;
+	}
+
+	diagonal = sqrt(diagonal);
+	hyp.set_diagonal(diagonal);
+}
+
+void TMethodDivByThree::compute_characteristic(const uint& id_Hyp) {
+	THyperinterval& hyp = F_intervals[id_Hyp];
+	hyp.set_characteristic(hyp.get_diagonal());
+}
+
+void TMethodDivByThree::compute_evaluations(const uint& out_idPoint) {
+	TPoint point = F_points[out_idPoint];
+	uint pos = point.F_idCoords;
+	for (uint i = 0; i < F_dimension; ++i)
+		coord_a[i] = F_coords[pos + i];
+
+	FunctionsValues& evals = Fp.F(coord_a);
+
+	point.F_idEvaluations = get_id_coord();
+	for (uint i = 0; i < F_constraints + 1; ++i)
+		F_evaluations.push_back(evals[i]);
+} 
 
 uint TMethodDivByThree::get_new_id() {
 	if (F_generated_points < max_generated_points)

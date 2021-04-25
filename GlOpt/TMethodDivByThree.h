@@ -42,6 +42,9 @@ public:
     virtual void createFirstInterval(); // создать самый первый гиперинтервал
     virtual bool divideInterval(const uint& id_divHyp); // поделить гиперинтервал
     virtual void fillIntervals(THyperinterval& parent, const uint& id_u, const uint& id_v);
+    void compute_diagonal(const uint& id_Hyp);
+    virtual void compute_characteristic(const uint& id_Hyp);
+    void compute_evaluations(const uint& out_idPoint);
     // virtual uint compute_new_coord(const uint& out_id, bool f); // сгенерировать новые координаты
     uint get_new_id(); // выдача идентификатора точки
     uint get_id_coord(); // получить итендификатор для координат

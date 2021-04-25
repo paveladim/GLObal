@@ -22,7 +22,7 @@ class THyperinterval
 	double F_characteristic; // характеристика гиперинтервала
 	double F_diagonal; // длина главной диагонали гиперинтервала
 	std::vector<std::queue<LipschitzConstantValue>> F_evaluations; // очередь локальных оценок констант 
-	std::vector<uint> F_division_tags; // ??
+	std::vector<uint> F_division_tags; // метки деления для каждой оси
 
 	// статические поля
 	static uint F_dimension; // размерность задачи
@@ -49,6 +49,7 @@ public:
 	uint get_idB();
 	uint get_idEvaluationsA();
 	uint get_idEvaluationsB();
+	double get_diagonal();
 	void set_idThis(const uint& out_idThis);
 	void set_idPointA(const uint& out_idPA);
 	void set_idPointB(const uint& out_idPB);
@@ -56,6 +57,7 @@ public:
 	void set_idB(const uint& out_idB);
 	void set_idEvaluationsA(const uint& out_idEvalA);
 	void set_idEvaluationsB(const uint& out_idEvalB);
+	void set_diagonal(const double& value);
 	double get_characteristic();
 	void set_characteristic(const double& out_charact);
 	uint get_div_tag(const uint& out_index);
