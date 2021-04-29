@@ -1,21 +1,3 @@
 ﻿  TMethodDivByThree.cpp
-D:\materials\projects\GlOpt\GlOpt\TMethodDivByThree.cpp(77,32): warning C4244: аргумент: преобразование "_Ty" в "const _Ty", возможна потеря данных
-          with
-          [
-              _Ty=CoordinateValue
-          ]
-          and
-          [
-              _Ty=uint
-          ]
-D:\materials\projects\GlOpt\GlOpt\TMethodDivByThree.cpp(89,32): warning C4244: аргумент: преобразование "_Ty" в "const _Ty", возможна потеря данных
-          with
-          [
-              _Ty=CoordinateValue
-          ]
-          and
-          [
-              _Ty=uint
-          ]
-D:\materials\projects\GlOpt\GlOpt\TMethodDivByThree.cpp(234): warning C4715: TMethodDivByThree::does_point_exist: значение возвращается не при всех путях выполнения
+D:\materials\projects\GlOpt\GlOpt\THyperinterval.h(52,76): warning C4227: устаревший элемент: пропуск квалификаторов для ссылки
   GlOpt.vcxproj -> D:\materials\projects\GlOpt\Debug\GlOpt.exe
