@@ -17,6 +17,8 @@ using EncodedCoordinates = std::vector<EncodedCoordinate>;
 using FunctionsValues = std::vector<FunctionValue>;
 using FunctionsCalculator =
 std::function< FunctionsValues& (FunctionsValues&, const CoordinatesValues&)>;
+using GainConstant = double;
+using GainConstants = std::vector<GainConstant>;
 using FunctionsCalculators = std::vector<FunctionsCalculator>;
 using LipschitzConstantValue = double;
 using FeatureValue = double;

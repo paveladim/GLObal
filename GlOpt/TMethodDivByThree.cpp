@@ -3,15 +3,19 @@
 uint TPoint::F_dimension;
 uint TPoint::F_constraints;
 
-TMethodDivByThree::TMethodDivByThree(const uint& out_dim, const uint& out_constr, const uint& depth, const double& out_eps, TProblem& out_prob) : 
-	F_dimension(out_dim), 
-	F_queueDepth(depth), F_constraints(out_constr), F_eps(out_eps), Fp(out_prob) {
+TMethodDivByThree::TMethodDivByThree(const uint& out_dim, const uint& out_constr, const uint& depth, 
+	const double& out_crit, TProblem& out_prob, GainConstants& out_gain) : 
+	F_dimension(out_dim), F_queueDepth(depth), F_constraints(out_constr), 
+	F_criticalSize(out_crit), Fp(out_prob), F_gainConst(out_gain) {
 	F_generated_points = 0;
 	F_generated_intervals = 0;
 	F_divide_axis = 0;
 	F_current_minimum = 0.0;
-	new_coord_u.resize(F_dimension);
-	new_coord_v.resize(F_dimension);
+	F_id_current_minimum = 0;
+	transit_coord_1.resize(F_dimension);
+	transit_coord_2.resize(F_dimension);
+	F_globalLipshEvaluations.resize(F_constraints + 1);
+	for (auto& elem : F_globalLipshEvaluations) elem = 0.0;
 
 	TPoint::F_dimension = out_dim;
 	TPoint::F_constraints = out_constr;
@@ -19,30 +23,31 @@ TMethodDivByThree::TMethodDivByThree(const uint& out_dim, const uint& out_constr
 
 void TMethodDivByThree::initialization() {
 	THyperinterval::init_static(F_dimension, F_constraints, F_queueDepth);
-	TPoint point_a;
-	TPoint point_b;
-	point_a.F_idThis = get_new_id();
-	point_b.F_idThis = get_new_id();
+	resize_points_deque();
+	resize_coords_deque();
+
+	F_points[0].F_idThis = get_new_id();
+	F_points[1].F_idThis = get_new_id();
+
+	TPoint& a = F_points[0];
+	TPoint& b = F_points[1];
 
 	for (uint i = 0; i < F_dimension; ++i)
-		F_coords.push_back(0);
+		F_coords[a.F_idThis * F_dimension + i] = 0;
 
 	for (uint i = 0; i < F_dimension; ++i)
-		F_coords.push_back(MAX_POWER_THREE);
+		F_coords[b.F_idThis * F_dimension + i] = MAX_POWER_THREE;
 
-	F_points.push_back(point_a);
-	F_points.push_back(point_b);
+	compute_evaluations(a.F_idThis);
+	compute_evaluations(b.F_idThis);
 
-	THyperinterval first;
-	first.set_idPointA(point_a.F_idThis);
-	first.set_idPointB(point_b.F_idThis);
-	first.set_idA(point_a.get_id_coord());
-	first.set_idB(point_b.get_id_coord());
-	first.set_idThis(get_new_interval());
-	F_intervals.push_back(first);
+	resize_intervals_deque();
+	F_intervals[0].set_idPointA(a.F_idThis);
+	F_intervals[0].set_idPointB(b.F_idThis);
+	F_intervals[0].set_idThis(get_new_interval());
 }
 
-bool TMethodDivByThree::divideInterval(const uint& id_divHyp) {
+bool TMethodDivByThree::trisect_interval(const uint& id_divHyp) {
 	THyperinterval& div = F_intervals[id_divHyp];
 	TPoint& point_a = F_points[div.get_idPointA()];
 	TPoint& point_b = F_points[div.get_idPointB()];
@@ -51,8 +56,8 @@ bool TMethodDivByThree::divideInterval(const uint& id_divHyp) {
 
 	// считываем координаты из базы
 	for (uint i = 0; i < F_dimension; ++i) {
-		new_coord_u[i] = F_coords[pos_a + i];
-		new_coord_v[i] = F_coords[pos_b + i];
+		transit_coord_1[i] = F_coords[pos_a + i];
+		transit_coord_2[i] = F_coords[pos_b + i];
 	}
 
 	uint pos = div.get_div_tag();
@@ -60,62 +65,62 @@ bool TMethodDivByThree::divideInterval(const uint& id_divHyp) {
 	// порождаем точку u от точки b
 	uint new_id_u = point_b.does_point_exist(HYPER_INTERVAL_SIDE_LENGTHS[pos], TPoint::direction::BACKWARD, F_divide_axis, F_coords);
 	// если точка не нашлась, то порождаем новую
-	if (new_id_u == 0) new_id_u = get_new_id();
-	if (new_id_u == F_points.size()) {
-		TPoint point_u;
-		point_u.F_idThis = new_id_u;
+	if (new_id_u == 0) {
+		new_id_u = get_new_id();
+		F_points[new_id_u].F_idThis = new_id_u;
 		for (uint i = 0; i < F_dimension; ++i)
-			F_coords.push_back(new_coord_u[i]);
-		F_coords[point_u.get_id_coord() + F_divide_axis] = HYPER_INTERVAL_SIDE_LENGTHS[pos];
-		F_points.push_back(point_u);
-	}
+			F_coords[F_points[new_id_u].get_id_coord() + i] = transit_coord_2[i];
+
+		F_coords[F_points[new_id_u].get_id_coord() + F_divide_axis] = HYPER_INTERVAL_SIDE_LENGTHS[pos];
+	} 
 
 	// порождаем точку v от точки a
 	uint new_id_v = point_a.does_point_exist(HYPER_INTERVAL_SIDE_LENGTHS[pos], TPoint::direction::FORWARD, F_divide_axis, F_coords);
-	if (new_id_v == 0) new_id_v = get_new_id();
-	if (new_id_v == F_points.size()) {
-		TPoint point_v;
-		point_v.F_idThis = new_id_v;
+	// если точка не нашлась, то порождаем новую
+	if (new_id_v == 0) {
+		new_id_v = get_new_id();
+		F_points[new_id_v].F_idThis = new_id_v;
 		for (uint i = 0; i < F_dimension; ++i)
-			F_coords.push_back(new_coord_v[i]);
-		F_coords[point_v.get_id_coord() + F_divide_axis] = HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
-		F_points.push_back(point_v);
-	}
+			F_coords[F_points[new_id_v].get_id_coord() + i] = transit_coord_1[i];
 
+		F_coords[F_points[new_id_v].get_id_coord() + F_divide_axis] = HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
+	} 
+
+	compute_evaluations(new_id_u);
+	compute_evaluations(new_id_v);
 	div.increase_division();
-	fillIntervals(div, new_id_u, new_id_v);
+	fill_intervals(div, new_id_u, new_id_v);
 	F_divide_axis = (++F_divide_axis) % F_dimension;
 	return true;
 }
 
-void TMethodDivByThree::fillIntervals(THyperinterval& parent, const uint& id_u, const uint& id_v) {
+void TMethodDivByThree::fill_intervals(THyperinterval& parent, const uint& id_u, const uint& id_v) {
 	TPoint& point_u = F_points[id_u];
 	TPoint& point_v = F_points[id_v];
+	resize_intervals_deque();
 
-	THyperinterval new_hyp_2 = parent;
-	THyperinterval new_hyp_3 = parent;
+	uint pos_hyp_2 = get_new_interval();
+	uint pos_hyp_3 = get_new_interval();
+
+	F_intervals[pos_hyp_2] = parent;
+	F_intervals[pos_hyp_3] = parent;
+	THyperinterval& new_hyp_2 = F_intervals[pos_hyp_2];
+	THyperinterval& new_hyp_3 = F_intervals[pos_hyp_3];
 
 	parent.set_idPointB(id_u);
-	parent.set_idB(point_u.get_id_coord());
-	parent.set_idEvaluationsB(point_u.get_id_evaluations());
 	compute_diagonal(parent.get_idThis());
+	compute_characteristic(parent.get_idThis());
 
-	new_hyp_2.set_idThis(get_new_interval());
+	new_hyp_2.set_idThis(pos_hyp_2);
 	new_hyp_2.set_idPointA(id_u);
 	new_hyp_2.set_idPointB(id_v);
-	new_hyp_2.set_idA(point_u.get_id_coord());
-	new_hyp_2.set_idB(point_v.get_id_coord());
-	new_hyp_2.set_idEvaluationsA(point_u.get_id_evaluations());
-	new_hyp_2.set_idEvaluationsB(point_v.get_id_evaluations());
-	F_intervals.push_back(new_hyp_2);
 	compute_diagonal(new_hyp_2.get_idThis());
+	compute_characteristic(new_hyp_2.get_idThis());
 
-	new_hyp_3.set_idThis(get_new_interval());
+	new_hyp_3.set_idThis(pos_hyp_3);
 	new_hyp_3.set_idPointA(id_v);
-	new_hyp_3.set_idA(point_v.get_id_coord());
-	new_hyp_3.set_idEvaluationsA(point_v.get_id_evaluations());
-	F_intervals.push_back(new_hyp_3);
 	compute_diagonal(new_hyp_3.get_idThis());
+	compute_characteristic(new_hyp_3.get_idThis());
 }
 
 void TMethodDivByThree::compute_diagonal(const uint& id_Hyp) {
@@ -124,9 +129,18 @@ void TMethodDivByThree::compute_diagonal(const uint& id_Hyp) {
 	uint pos_coord_b = hyp.get_idB();
 
 	double diagonal = 0.0;
-	double temp;
+	double temp = 0.0;
+
 	for (uint i = 0; i < F_dimension; ++i) {
-		temp = (double)F_coords[pos_coord_b + i] - (double)F_coords[pos_coord_a + i];
+		transit_coord_1[i] = F_coords[pos_coord_a + i];
+		transit_coord_2[i] = F_coords[pos_coord_b + i];
+	}
+
+	CoordinatesValues decoded_coord_a = Fp.decode_coordinates(transit_coord_1);
+	CoordinatesValues decoded_coord_b = Fp.decode_coordinates(transit_coord_2);
+
+	for (uint i = 0; i < F_dimension; ++i) {
+		temp = decoded_coord_a[i] - decoded_coord_b[i];
 		temp = fabs(temp);
 		diagonal = diagonal + temp * temp;
 	}
@@ -141,16 +155,36 @@ void TMethodDivByThree::compute_characteristic(const uint& id_Hyp) {
 }
 
 void TMethodDivByThree::compute_evaluations(const uint& out_idPoint) {
-	TPoint point = F_points[out_idPoint];
+	resize_evaluations_deque();
+	TPoint& point = F_points[out_idPoint];
 	uint pos = point.get_id_coord();
 	for (uint i = 0; i < F_dimension; ++i)
-		new_coord_u[i] = F_coords[pos + i];
+		transit_coord_1[i] = F_coords[pos + i];
 
-	FunctionsValues& evals = Fp(new_coord_u);
+	FunctionsValues& evals = Fp(transit_coord_1);
 
 	for (uint i = 0; i < F_constraints + 1; ++i)
-		F_evaluations.push_back(evals[i]);
+		F_evaluations[point.F_idThis * (F_constraints + 1) + i] = evals[i];
 } 
+
+uint TMethodDivByThree::choose_optimal_to_trisect() {
+	uint id_optimal_hyp = 0;
+
+	for (auto& elem : F_intervals)
+		if (F_intervals[id_optimal_hyp].get_characteristic() < elem.get_characteristic())
+			id_optimal_hyp = elem.get_idThis();
+
+	return id_optimal_hyp;
+}
+
+uint TMethodDivByThree::do_step(const uint& id_divHyp) {
+	trisect_interval(id_divHyp);
+	return choose_optimal_to_trisect();
+}
+
+void TMethodDivByThree::launch_method() {
+	
+}
 
 /* uint TMethodDivByThree::does_point_exist(TPoint& parent, const uint& des_val, const direction& dir) {
 	if (dir == direction::FORWARD) {

@@ -19,6 +19,7 @@ struct TPoint {
 
 	TPoint() : F_idThis(0) {
 		if (F_dimension == 0) TPointTypeError::ERROR;
+		else TPointTypeError::OK;
 		dec_coords.resize(F_dimension);
 		inc_coords.resize(F_dimension);
 	}

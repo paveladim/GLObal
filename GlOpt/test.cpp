@@ -15,11 +15,11 @@ int main() {
 	uint cst{ 1 };
 	uint dep{ 3 };
 	TProblem testProblem1(dim, cst, { 0, 0 }, { 1, 1 }, &f);
+	GainConstants gc{ 1, 1 };
 
-	TMethodDivByThree testMethod(dim, cst, dep, 0.001, testProblem1);
+	TMethodDivByThree testMethod(dim, cst, dep, 0.001, testProblem1, gc);
 	testMethod.initialization();
-	testMethod.divideInterval(0);
-	testMethod.compute_evaluations(1);
+	std::cout << testMethod.do_step(0) << std::endl;
 
 	return 0;
 }
