@@ -1,6 +1,3 @@
 ﻿  TMethodDivByThree.cpp
-D:\materials\projects\GlOpt\GlOpt\THyperinterval.h(51,76): warning C4227: устаревший элемент: пропуск квалификаторов для ссылки
-  test.cpp
-D:\materials\projects\GlOpt\GlOpt\THyperinterval.h(51,76): warning C4227: устаревший элемент: пропуск квалификаторов для ссылки
-  Создание кода...
+D:\materials\projects\GlOpt\GlOpt\THyperinterval.h(52,76): warning C4227: устаревший элемент: пропуск квалификаторов для ссылки
   GlOpt.vcxproj -> D:\materials\projects\GlOpt\Debug\GlOpt.exe

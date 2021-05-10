@@ -28,21 +28,24 @@ struct TPoint {
 		if (dir == direction::FORWARD) {
 			auto beg = inc_coords[divide_axis].begin();
 			auto end = inc_coords[divide_axis].end();
-			for (auto it = beg; it != end; ++it) {
-				uint pos = get_id_coord() + divide_axis;
-				if (coords[pos] == des_val) return *it;
-			}
+			for (auto it = beg; it != end; ++it)
+				if (coords[(*it) * F_dimension + divide_axis] == des_val) return *it;
 		}
 		else {
 			auto beg = dec_coords[divide_axis].begin();
 			auto end = dec_coords[divide_axis].end();
-			for (auto it = beg; it != end; ++it) {
-				uint pos = get_id_coord() + divide_axis;
-				if (coords[pos] == des_val) return *it;
-			}
+			for (auto it = beg; it != end; ++it)
+				if (coords[(*it) * F_dimension + divide_axis] == des_val) return *it;
 		}
 
 		return 0;
+	}
+
+	void connect_points(const uint& id_child, const uint& divide_axis, const TPoint::direction& dir) {
+		if (dir == direction::BACKWARD)
+			dec_coords[divide_axis].push_back(id_child);
+		else
+			inc_coords[divide_axis].push_back(id_child);
 	}
 };
 

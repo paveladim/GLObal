@@ -51,9 +51,9 @@ public:
     uint get_id_evaluations() const { return F_generated_points * (F_constraints + 1); }
     uint get_new_interval() { return F_generated_intervals++; } // выдача идентификатора гиперинтервала
     // выбрать "лучший" гиперинтервал для деления
-    uint choose_optimal_to_trisect();
-    uint do_step(const uint& if_divHyp);
-    void launch_method();
+    uint choose_optimal_to_trisect(); // найти оптимальный для деления на три
+    uint do_step(const uint& if_divHyp); // сделать шаг метода
+    void launch_method(); // для тестирования
     // методы расширения деков
     void resize_points_deque() {
         if (F_points.size() - F_generated_points < 1)
@@ -71,11 +71,9 @@ public:
     }
 
     void resize_intervals_deque() {
-        if (F_intervals.size() < F_generated_points)
+        if (F_intervals.size() < F_generated_intervals + 2)
             F_intervals.resize(F_intervals.size() + 100);
     }
-
-    // uint does_point_exist(TPoint& parent, const uint& des_val, const TPoint::direction& dir); // существует ли точка в базе данных уже
 };
 
 #endif

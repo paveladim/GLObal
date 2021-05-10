@@ -48,6 +48,7 @@ public:
 	// получить итендификатор значения целевой функции и ограничений в точке активной диагонали
 	uint get_idEvaluationsB() const { return F_idPointB * (F_constraints + 1); }
 	uint get_div_tag() const { return MAX_EXPONENT_THREE - 1 - F_divisions / F_dimension; }
+	uint get_div_axis() const { return F_divisions % F_dimension; }
 	std::vector<LipschitzConstantValue>& const getLocalLipschitzConstantValues(std::vector<LipschitzConstantValue>& llcv);
 	double get_diagonal() const { return F_diagonal; } // получить размер диагонали гиперинтервала
 	double get_characteristic() const { return F_characteristic; } // получить значение характеристики гиперинтервала

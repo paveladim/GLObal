@@ -18,8 +18,7 @@ int main() {
 	GainConstants gc{ 1, 1 };
 
 	TMethodDivByThree testMethod(dim, cst, dep, 0.001, testProblem1, gc);
-	testMethod.initialization();
-	std::cout << testMethod.do_step(0) << std::endl;
+	testMethod.launch_method();
 
 	return 0;
 }

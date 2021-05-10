@@ -1,3 +1,4 @@
+#include <iostream>
 #include "TMethodDivByThree.h"
 
 uint TPoint::F_dimension;
@@ -48,11 +49,15 @@ void TMethodDivByThree::initialization() {
 }
 
 bool TMethodDivByThree::trisect_interval(const uint& id_divHyp) {
+	resize_points_deque();
+	resize_coords_deque();
 	THyperinterval& div = F_intervals[id_divHyp];
 	TPoint& point_a = F_points[div.get_idPointA()];
 	TPoint& point_b = F_points[div.get_idPointB()];
 	uint pos_a = div.get_idA();
 	uint pos_b = div.get_idB();
+
+	F_divide_axis = div.get_div_axis(); // по какой оси будем разбивать гиперинтервал?
 
 	// считываем координаты из базы
 	for (uint i = 0; i < F_dimension; ++i) {
@@ -61,9 +66,20 @@ bool TMethodDivByThree::trisect_interval(const uint& id_divHyp) {
 	}
 
 	uint pos = div.get_div_tag();
+	EncodedCoordinate new_coord_u = transit_coord_2[F_divide_axis] - HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos]; // новая координата порождённой точки u по делимой оси
+	TPoint::direction direction_u = TPoint::direction::BACKWARD;
+	EncodedCoordinate new_coord_v = transit_coord_1[F_divide_axis] + HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos]; // новая координата порождённой точки v по делимой оси
+	TPoint::direction direction_v = TPoint::direction::FORWARD;
+
+	if (transit_coord_1[F_divide_axis] > transit_coord_2[F_divide_axis]) {
+		new_coord_u = transit_coord_2[F_divide_axis] + HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
+		direction_u = TPoint::direction::FORWARD;
+		new_coord_v = transit_coord_1[F_divide_axis] - HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
+		direction_v = TPoint::direction::BACKWARD;
+	}
 
 	// порождаем точку u от точки b
-	uint new_id_u = point_b.does_point_exist(HYPER_INTERVAL_SIDE_LENGTHS[pos], TPoint::direction::BACKWARD, F_divide_axis, F_coords);
+	uint new_id_u = point_b.does_point_exist(new_coord_u, direction_u, F_divide_axis, F_coords);
 	// если точка не нашлась, то порождаем новую
 	if (new_id_u == 0) {
 		new_id_u = get_new_id();
@@ -71,11 +87,13 @@ bool TMethodDivByThree::trisect_interval(const uint& id_divHyp) {
 		for (uint i = 0; i < F_dimension; ++i)
 			F_coords[F_points[new_id_u].get_id_coord() + i] = transit_coord_2[i];
 
-		F_coords[F_points[new_id_u].get_id_coord() + F_divide_axis] = HYPER_INTERVAL_SIDE_LENGTHS[pos];
-	} 
+		F_coords[F_points[new_id_u].get_id_coord() + F_divide_axis] = new_coord_u;
+		compute_evaluations(new_id_u);
+		point_b.connect_points(new_id_u, F_divide_axis, direction_u);
+	}
 
 	// порождаем точку v от точки a
-	uint new_id_v = point_a.does_point_exist(HYPER_INTERVAL_SIDE_LENGTHS[pos], TPoint::direction::FORWARD, F_divide_axis, F_coords);
+	uint new_id_v = point_a.does_point_exist(new_coord_v, direction_v, F_divide_axis, F_coords);
 	// если точка не нашлась, то порождаем новую
 	if (new_id_v == 0) {
 		new_id_v = get_new_id();
@@ -83,14 +101,13 @@ bool TMethodDivByThree::trisect_interval(const uint& id_divHyp) {
 		for (uint i = 0; i < F_dimension; ++i)
 			F_coords[F_points[new_id_v].get_id_coord() + i] = transit_coord_1[i];
 
-		F_coords[F_points[new_id_v].get_id_coord() + F_divide_axis] = HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
-	} 
+		F_coords[F_points[new_id_v].get_id_coord() + F_divide_axis] = new_coord_v;
+		compute_evaluations(new_id_v);
+		point_a.connect_points(new_id_v, F_divide_axis, direction_v);
+	}
 
-	compute_evaluations(new_id_u);
-	compute_evaluations(new_id_v);
 	div.increase_division();
 	fill_intervals(div, new_id_u, new_id_v);
-	F_divide_axis = (++F_divide_axis) % F_dimension;
 	return true;
 }
 
@@ -140,8 +157,7 @@ void TMethodDivByThree::compute_diagonal(const uint& id_Hyp) {
 	CoordinatesValues decoded_coord_b = Fp.decode_coordinates(transit_coord_2);
 
 	for (uint i = 0; i < F_dimension; ++i) {
-		temp = decoded_coord_a[i] - decoded_coord_b[i];
-		temp = fabs(temp);
+		temp = decoded_coord_b[i] - decoded_coord_a[i];
 		diagonal = diagonal + temp * temp;
 	}
 
@@ -159,9 +175,9 @@ void TMethodDivByThree::compute_evaluations(const uint& out_idPoint) {
 	TPoint& point = F_points[out_idPoint];
 	uint pos = point.get_id_coord();
 	for (uint i = 0; i < F_dimension; ++i)
-		transit_coord_1[i] = F_coords[pos + i];
+		transit_coord_2[i] = F_coords[pos + i];
 
-	FunctionsValues& evals = Fp(transit_coord_1);
+	FunctionsValues& evals = Fp(transit_coord_2);
 
 	for (uint i = 0; i < F_constraints + 1; ++i)
 		F_evaluations[point.F_idThis * (F_constraints + 1) + i] = evals[i];
@@ -169,10 +185,17 @@ void TMethodDivByThree::compute_evaluations(const uint& out_idPoint) {
 
 uint TMethodDivByThree::choose_optimal_to_trisect() {
 	uint id_optimal_hyp = 0;
+	double optimal_charact = F_intervals[id_optimal_hyp].get_characteristic();
+	double current_charact = 0.0;
 
-	for (auto& elem : F_intervals)
-		if (F_intervals[id_optimal_hyp].get_characteristic() < elem.get_characteristic())
-			id_optimal_hyp = elem.get_idThis();
+	for (uint id_hyp = 1; id_hyp < F_generated_intervals; ++id_hyp) {
+		current_charact = F_intervals[id_hyp].get_characteristic();
+		if (std::abs(current_charact - optimal_charact) < std::numeric_limits<double>::epsilon());
+		else if (optimal_charact < current_charact) {
+			optimal_charact = current_charact;
+			id_optimal_hyp = id_hyp;
+		}
+	}
 
 	return id_optimal_hyp;
 }
@@ -183,50 +206,10 @@ uint TMethodDivByThree::do_step(const uint& id_divHyp) {
 }
 
 void TMethodDivByThree::launch_method() {
-	
+	initialization();
+	uint id_current_interval = 0;
+	for (uint i = 0; i < 500; ++i) {
+		id_current_interval = do_step(id_current_interval);
+		std::cout << id_current_interval << std::endl;
+	}
 }
-
-/* uint TMethodDivByThree::does_point_exist(TPoint& parent, const uint& des_val, const direction& dir) {
-	if (dir == direction::FORWARD) {
-		auto beg = parent.inc_coords[F_divide_axis].begin();
-		auto end = parent.inc_coords[F_divide_axis].end();
-		for (auto it = beg; it != end; ++it)
-		{
-			TPoint& point = F_points[*it];
-			uint pos = point.get_id_coord() + F_divide_axis;
-			if (F_coords[pos] == des_val) return *it;
-			if (F_coords[pos] < des_val) {
-				uint new_id = get_new_id();
-				parent.inc_coords[F_divide_axis].insert(it, new_id);
-				return new_id;
-			}
-		}
-
-		if (beg == end) {
-			uint new_id = get_new_id();
-			parent.inc_coords[F_divide_axis].push_back(new_id);
-			return new_id;
-		}
-	}
-	else {
-		auto beg = parent.dec_coords[F_divide_axis].begin();
-		auto end = parent.dec_coords[F_divide_axis].end();
-		for (auto it = beg; it != end; ++it)
-		{
-			TPoint& point = F_points[*it];
-			uint pos = point.get_id_coord() + F_divide_axis;
-			if (F_coords[pos] == des_val) return *it;
-			if (F_coords[pos] < des_val) {
-				uint new_id = get_new_id();
-				parent.inc_coords[F_divide_axis].insert(it, new_id);
-				return new_id;
-			}
-		}
-
-		if (beg == end) {
-			uint new_id = get_new_id();
-			parent.inc_coords[F_divide_axis].push_back(new_id);
-			return new_id;
-		}
-	}
-} */
