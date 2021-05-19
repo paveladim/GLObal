@@ -27,16 +27,19 @@ class TMethodDivByThree
     uint F_generated_points; // число уже сгенерированных методом точек
     uint F_generated_intervals; // число уже сгенерированных методом гиперинтервалов
 
-    double F_criticalSize; // критическое значения размера гиперинтервала
+    double F_criticalSize; // пороговый размер гиперинтервала
     double F_current_minimum; // текущее минимальное значение целевой функции
     uint F_id_current_minimum; // итендификатор глобального минимума
 
     TProblem& Fp; // вычислитель целевой функции и функций-ограничений
-    GainConstants F_gainConst; // вектор констант завышения для оценок констант целевой функции и ограничений
+    GainLipshConstant F_gainObjective; // константа завышения константы Липшица для целевой функции
+    GainLipshConstant F_gainConstraints; // константа завышения констант Липшица для ограничений
+    double delta; // параметр для осторожных локальных оценок
     std::vector<double> F_globalLipshEvaluations; // вектор глобальных оценок констант Липшица целевой функции и ограничений
 public:
     TMethodDivByThree() = delete;
-    TMethodDivByThree(const uint& out_dim, const uint& out_constr, const uint& depth, const double& out_crit, TProblem& out_prob, GainConstants& out_gain);
+    TMethodDivByThree(const uint& out_dim, const uint& out_constr, const uint& depth, 
+        TProblem& out_prob, const GainLipshConstant& out_gainObj, const GainLipshConstant& out_gainCst, const double& beta);
     ~TMethodDivByThree() {};
 
     virtual void initialization(); // создать самый первый гиперинтервал
@@ -50,6 +53,8 @@ public:
     // получить итендификатор на начало размещения значений целевой функции и ограничений в точке
     uint get_id_evaluations() const { return F_generated_points * (F_constraints + 1); }
     uint get_new_interval() { return F_generated_intervals++; } // выдача идентификатора гиперинтервала
+    void compute_localLipshConst(const uint& id_Hyp); // вычислить локальные оценки констант Липшица
+    void compute_globalLipshConst(); // вычислить глобальные оценки констант Липшица
     // выбрать "лучший" гиперинтервал для деления
     uint choose_optimal_to_trisect(); // найти оптимальный для деления на три
     uint do_step(const uint& if_divHyp); // сделать шаг метода

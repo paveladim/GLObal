@@ -4,10 +4,10 @@
 uint TPoint::F_dimension;
 uint TPoint::F_constraints;
 
-TMethodDivByThree::TMethodDivByThree(const uint& out_dim, const uint& out_constr, const uint& depth, 
-	const double& out_crit, TProblem& out_prob, GainConstants& out_gain) : 
-	F_dimension(out_dim), F_queueDepth(depth), F_constraints(out_constr), 
-	F_criticalSize(out_crit), Fp(out_prob), F_gainConst(out_gain) {
+TMethodDivByThree::TMethodDivByThree(const uint& out_dim, const uint& out_constr, const uint& depth,
+	TProblem& out_prob, const GainLipshConstant& out_gainObj, const GainLipshConstant& out_gainCst, const double& beta) :
+	F_dimension(out_dim), F_queueDepth(depth), F_constraints(out_constr), Fp(out_prob), F_gainObjective(out_gainObj),
+	F_gainConstraints(out_gainCst), delta(0.0000000001) {
 	F_generated_points = 0;
 	F_generated_intervals = 0;
 	F_divide_axis = 0;
@@ -17,6 +17,8 @@ TMethodDivByThree::TMethodDivByThree(const uint& out_dim, const uint& out_constr
 	transit_coord_2.resize(F_dimension);
 	F_globalLipshEvaluations.resize(F_constraints + 1);
 	for (auto& elem : F_globalLipshEvaluations) elem = 0.0;
+
+	F_criticalSize = beta * sqrt(F_dimension * (CoordinateValue)MAX_POWER_THREE * (CoordinateValue)MAX_POWER_THREE);
 
 	TPoint::F_dimension = out_dim;
 	TPoint::F_constraints = out_constr;
@@ -46,6 +48,10 @@ void TMethodDivByThree::initialization() {
 	F_intervals[0].set_idPointA(a.F_idThis);
 	F_intervals[0].set_idPointB(b.F_idThis);
 	F_intervals[0].set_idThis(get_new_interval());
+	compute_diagonal(F_intervals[0].get_idThis());
+	compute_characteristic(F_intervals[0].get_idThis());
+	F_intervals[0].init_queues();
+	compute_localLipshConst(F_intervals[0].get_idThis());
 }
 
 bool TMethodDivByThree::trisect_interval(const uint& id_divHyp) {
@@ -67,15 +73,15 @@ bool TMethodDivByThree::trisect_interval(const uint& id_divHyp) {
 
 	uint pos = div.get_div_tag();
 	EncodedCoordinate new_coord_u = transit_coord_2[F_divide_axis] - HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos]; // новая координата порождённой точки u по делимой оси
-	TPoint::direction direction_u = TPoint::direction::BACKWARD;
+	TPoint::direction direction_u = TPoint::direction::DECREASE;
 	EncodedCoordinate new_coord_v = transit_coord_1[F_divide_axis] + HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos]; // новая координата порождённой точки v по делимой оси
-	TPoint::direction direction_v = TPoint::direction::FORWARD;
+	TPoint::direction direction_v = TPoint::direction::INCREASE;
 
 	if (transit_coord_1[F_divide_axis] > transit_coord_2[F_divide_axis]) {
 		new_coord_u = transit_coord_2[F_divide_axis] + HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
-		direction_u = TPoint::direction::FORWARD;
+		direction_u = TPoint::direction::INCREASE;
 		new_coord_v = transit_coord_1[F_divide_axis] - HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
-		direction_v = TPoint::direction::BACKWARD;
+		direction_v = TPoint::direction::DECREASE;
 	}
 
 	// порождаем точку u от точки b
@@ -126,17 +132,20 @@ void TMethodDivByThree::fill_intervals(THyperinterval& parent, const uint& id_u,
 
 	parent.set_idPointB(id_u);
 	compute_diagonal(parent.get_idThis());
+	compute_localLipshConst(parent.get_idThis());
 	compute_characteristic(parent.get_idThis());
 
 	new_hyp_2.set_idThis(pos_hyp_2);
 	new_hyp_2.set_idPointA(id_u);
 	new_hyp_2.set_idPointB(id_v);
 	compute_diagonal(new_hyp_2.get_idThis());
+	compute_localLipshConst(new_hyp_2.get_idThis());
 	compute_characteristic(new_hyp_2.get_idThis());
 
 	new_hyp_3.set_idThis(pos_hyp_3);
 	new_hyp_3.set_idPointA(id_v);
 	compute_diagonal(new_hyp_3.get_idThis());
+	compute_localLipshConst(new_hyp_3.get_idThis());
 	compute_characteristic(new_hyp_3.get_idThis());
 }
 
@@ -182,6 +191,28 @@ void TMethodDivByThree::compute_evaluations(const uint& out_idPoint) {
 	for (uint i = 0; i < F_constraints + 1; ++i)
 		F_evaluations[point.F_idThis * (F_constraints + 1) + i] = evals[i];
 } 
+
+void TMethodDivByThree::compute_localLipshConst(const uint& id_Hyp) {
+	std::vector<LipschitzConstantValue> new_llcv;
+	new_llcv.resize(F_constraints + 1);
+	THyperinterval& hyp = F_intervals[id_Hyp];
+
+	for (uint i = 0; i < F_constraints + 1; ++i) {
+		new_llcv[i] = F_evaluations[hyp.get_idEvaluationsA() + i] - F_evaluations[hyp.get_idEvaluationsB() + i];
+		new_llcv[i] = std::abs(new_llcv[i]) / hyp.get_diagonal();
+	}
+
+	hyp.update_queuesLipshEvaluations(new_llcv, delta);
+}
+
+void TMethodDivByThree::compute_globalLipshConst() {
+	for (uint i = 0; i < F_generated_intervals; ++i) {
+		const std::vector<double>& max_i = F_intervals[i].get_maxLipshEvaluations();
+		for (uint j = 0; j < F_constraints + 1; ++j)
+			if (max_i[j] > F_globalLipshEvaluations[j])
+				F_globalLipshEvaluations[j] = max_i[j];
+	}
+}
 
 uint TMethodDivByThree::choose_optimal_to_trisect() {
 	uint id_optimal_hyp = 0;

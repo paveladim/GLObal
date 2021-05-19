@@ -26,11 +26,18 @@ void THyperinterval::init_queues() {
 		for (uint i = 0; i < F_queue_depth; ++i) elem.push(0.0);
 }
 
-void THyperinterval::update_queuesLipshEvaluations(std::vector<LipschitzConstantValue>& new_llcv) {
+void THyperinterval::update_queuesLipshEvaluations(std::vector<LipschitzConstantValue>& new_llcv, const double& _delta) {
 	for (uint i = 0; i < F_constraints + 1; ++i) {
-		if (new_llcv[i] > F_maxLocalLipshEvaluations[i])
-			F_maxLocalLipshEvaluations[i] = new_llcv[i];
 		F_localsLipshEvaluations[i].pop();
-		F_localsLipshEvaluations[i].push(new_llcv[i]);
+		if (new_llcv[i] > _delta) {
+			if (new_llcv[i] > F_maxLocalLipshEvaluations[i])
+				F_maxLocalLipshEvaluations[i] = new_llcv[i];
+			F_localsLipshEvaluations[i].push(new_llcv[i]);
+		}
+		else {
+			if (_delta > F_maxLocalLipshEvaluations[i])
+				F_maxLocalLipshEvaluations[i] = _delta;
+			F_localsLipshEvaluations[i].push(_delta);
+		}
 	}
 }

@@ -15,9 +15,11 @@ int main() {
 	uint cst{ 1 };
 	uint dep{ 3 };
 	TProblem testProblem1(dim, cst, { 0, 0 }, { 1, 1 }, &f);
-	GainConstants gc{ 1, 1 };
+	GainLipshConstant obj_const{ 1 };
+	GainLipshConstant cst_const{ 1 };
+	double beta = 0.3;
 
-	TMethodDivByThree testMethod(dim, cst, dep, 0.001, testProblem1, gc);
+	TMethodDivByThree testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta);
 	testMethod.launch_method();
 
 	return 0;

@@ -14,7 +14,7 @@ struct TPoint {
 	uint get_id_coord() const { return F_idThis * F_dimension; }
 	uint get_id_evaluations() const { return F_idThis * (F_constraints + 1); }
 
-	enum class direction { BACKWARD, FORWARD };
+	enum class direction { DECREASE, INCREASE };
 	enum class TPointTypeError { OK, ERROR };
 
 	TPoint() : F_idThis(0) {
@@ -25,7 +25,7 @@ struct TPoint {
 	}
 
 	uint does_point_exist(const uint& des_val, const direction& dir, const uint& divide_axis, const std::deque<uint>& coords) {
-		if (dir == direction::FORWARD) {
+		if (dir == direction::INCREASE) {
 			auto beg = inc_coords[divide_axis].begin();
 			auto end = inc_coords[divide_axis].end();
 			for (auto it = beg; it != end; ++it)
@@ -42,7 +42,7 @@ struct TPoint {
 	}
 
 	void connect_points(const uint& id_child, const uint& divide_axis, const TPoint::direction& dir) {
-		if (dir == direction::BACKWARD)
+		if (dir == direction::DECREASE)
 			dec_coords[divide_axis].push_back(id_child);
 		else
 			inc_coords[divide_axis].push_back(id_child);

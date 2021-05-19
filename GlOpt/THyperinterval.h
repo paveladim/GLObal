@@ -59,7 +59,7 @@ public:
 	void set_characteristic(const double& out_charact) { F_characteristic = out_charact; }
 	void init_queues(); // инициализировать очереди оценок констант Липшица нулями
 	// обновление оценок констант Липшица, поддержка длины очереди и определение максимальных оценок констант
-	void update_queuesLipshEvaluations(std::vector<LipschitzConstantValue>& new_llcv);
+	void update_queuesLipshEvaluations(std::vector<LipschitzConstantValue>& new_llcv, const double& _delta);
 	// получить вектор максимальных локальных оценок констант
 	const std::vector<LipschitzConstantValue>& get_maxLipshEvaluations() const { return F_maxLocalLipshEvaluations; }
 };
