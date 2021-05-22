@@ -26,18 +26,27 @@ void THyperinterval::init_queues() {
 		for (uint i = 0; i < F_queue_depth; ++i) elem.push(0.0);
 }
 
+void THyperinterval::find_max_localLipshEvaluations() {
+	LipschitzConstantValue potential_max = 0;
+	for (uint i = 0; i < F_constraints + 1; ++i) {
+		for (uint j = 0; j < F_queue_depth; ++j) {
+			potential_max = F_localsLipshEvaluations[i].front();
+			F_localsLipshEvaluations[i].pop();
+			if (F_maxLocalLipshEvaluations[i] < potential_max)
+				F_maxLocalLipshEvaluations[i] = potential_max;
+			F_localsLipshEvaluations[i].push(potential_max);
+		}
+	}
+}
+
 void THyperinterval::update_queuesLipshEvaluations(std::vector<LipschitzConstantValue>& new_llcv, const double& _delta) {
 	for (uint i = 0; i < F_constraints + 1; ++i) {
 		F_localsLipshEvaluations[i].pop();
-		if (new_llcv[i] > _delta) {
-			if (new_llcv[i] > F_maxLocalLipshEvaluations[i])
-				F_maxLocalLipshEvaluations[i] = new_llcv[i];
+		if (new_llcv[i] > _delta)
 			F_localsLipshEvaluations[i].push(new_llcv[i]);
-		}
-		else {
-			if (_delta > F_maxLocalLipshEvaluations[i])
-				F_maxLocalLipshEvaluations[i] = _delta;
+		else
 			F_localsLipshEvaluations[i].push(_delta);
-		}
 	}
+	
+	find_max_localLipshEvaluations();
 }

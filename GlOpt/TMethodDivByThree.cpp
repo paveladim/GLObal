@@ -162,11 +162,8 @@ void TMethodDivByThree::compute_diagonal(const uint& id_Hyp) {
 		transit_coord_2[i] = F_coords[pos_coord_b + i];
 	}
 
-	CoordinatesValues decoded_coord_a = Fp.decode_coordinates(transit_coord_1);
-	CoordinatesValues decoded_coord_b = Fp.decode_coordinates(transit_coord_2);
-
 	for (uint i = 0; i < F_dimension; ++i) {
-		temp = decoded_coord_b[i] - decoded_coord_a[i];
+		temp = (CoordinateValue)transit_coord_1[i] - (CoordinateValue)transit_coord_2[i];
 		diagonal = diagonal + temp * temp;
 	}
 
@@ -176,7 +173,14 @@ void TMethodDivByThree::compute_diagonal(const uint& id_Hyp) {
 
 void TMethodDivByThree::compute_characteristic(const uint& id_Hyp) {
 	THyperinterval& hyp = F_intervals[id_Hyp];
-	hyp.set_characteristic(hyp.get_diagonal());
+	// hyp.set_characteristic(hyp.get_diagonal());
+
+	std::vector<LipschitzConstantValue> max_LipshEval = hyp.get_maxLipshEvaluations();
+	double charact = 0.5 * (F_evaluations[hyp.get_idEvaluationsA()] + F_evaluations[hyp.get_idEvaluationsB()]);
+	double ratio = hyp.get_diagonal() / F_criticalSize;
+	charact = charact - 0.5 * hyp.get_diagonal() * (ratio * F_gainObjective * 
+		F_globalLipshEvaluations[0] + (1 - ratio) * max_LipshEval[0]);
+	hyp.set_characteristic(charact);
 }
 
 void TMethodDivByThree::compute_evaluations(const uint& out_idPoint) {
@@ -205,6 +209,18 @@ void TMethodDivByThree::compute_localLipshConst(const uint& id_Hyp) {
 	hyp.update_queuesLipshEvaluations(new_llcv, delta);
 }
 
+void TMethodDivByThree::update_globalLipshEval() {
+	std::vector<LipschitzConstantValue> current_maxLipshEval;
+	current_maxLipshEval.resize(F_constraints + 1);
+	for (uint i = 0; i < F_generated_intervals; ++i) {
+		current_maxLipshEval = F_intervals[i].get_maxLipshEvaluations();
+		for (uint j = 0; j < F_constraints + 1; ++j) {
+			if (F_globalLipshEvaluations[j] < current_maxLipshEval[j])
+				F_globalLipshEvaluations[j] = current_maxLipshEval[j];
+		}
+	}
+}
+
 void TMethodDivByThree::compute_globalLipshConst() {
 	for (uint i = 0; i < F_generated_intervals; ++i) {
 		const std::vector<double>& max_i = F_intervals[i].get_maxLipshEvaluations();
@@ -222,7 +238,7 @@ uint TMethodDivByThree::choose_optimal_to_trisect() {
 	for (uint id_hyp = 1; id_hyp < F_generated_intervals; ++id_hyp) {
 		current_charact = F_intervals[id_hyp].get_characteristic();
 		if (std::abs(current_charact - optimal_charact) < std::numeric_limits<double>::epsilon());
-		else if (optimal_charact < current_charact) {
+		else if (optimal_charact > current_charact) {
 			optimal_charact = current_charact;
 			id_optimal_hyp = id_hyp;
 		}
@@ -233,14 +249,17 @@ uint TMethodDivByThree::choose_optimal_to_trisect() {
 
 uint TMethodDivByThree::do_step(const uint& id_divHyp) {
 	trisect_interval(id_divHyp);
+	update_globalLipshEval();
 	return choose_optimal_to_trisect();
 }
 
 void TMethodDivByThree::launch_method() {
 	initialization();
 	uint id_current_interval = 0;
-	for (uint i = 0; i < 500; ++i) {
+	for (uint i = 0; i < 400; ++i) {
 		id_current_interval = do_step(id_current_interval);
 		std::cout << id_current_interval << std::endl;
+		THyperinterval& hyp = F_intervals[id_current_interval];
+		F_current_minimum = std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]);
 	}
 }

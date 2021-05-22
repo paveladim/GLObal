@@ -55,6 +55,7 @@ public:
     uint get_new_interval() { return F_generated_intervals++; } // выдача идентификатора гиперинтервала
     void compute_localLipshConst(const uint& id_Hyp); // вычислить локальные оценки констант Липшица
     void compute_globalLipshConst(); // вычислить глобальные оценки констант Липшица
+    void update_globalLipshEval(); // обновить глобальные оценки констант Липшица
     // выбрать "лучший" гиперинтервал для деления
     uint choose_optimal_to_trisect(); // найти оптимальный для деления на три
     uint do_step(const uint& if_divHyp); // сделать шаг метода
@@ -67,12 +68,12 @@ public:
 
     void resize_coords_deque() { 
         if (F_coords.size() - F_generated_points * F_dimension < F_dimension) 
-            F_coords.resize(F_coords.size() + 100); 
+            F_coords.resize(F_coords.size() + 100 * F_dimension); 
     }
 
     void resize_evaluations_deque() {
         if ((F_evaluations.size() - F_generated_points * (F_constraints + 1) < (F_constraints + 1)) || F_evaluations.size() == 0)
-            F_evaluations.resize(F_evaluations.size() + 100);
+            F_evaluations.resize(F_evaluations.size() + 100 * (F_constraints + 1));
     }
 
     void resize_intervals_deque() {

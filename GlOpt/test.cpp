@@ -4,7 +4,7 @@
 
 FunctionsValues& f(FunctionsValues& res, const CoordinatesValues& x)
 {
-	res[0] = x[0] * x[0] + 10 * x[1] * x[1];
+	res[0] = x[0] * x[0] + x[1] * x[1];
 	res[1] = 5 * x[0] + x[1] * x[1] - 5;
 	return res;
 }
