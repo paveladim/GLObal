@@ -142,6 +142,7 @@
     <ClCompile Include="test.cpp" />
     <ClCompile Include="THyperinterval.cpp" />
     <ClCompile Include="TMethodDivByThree.cpp" />
+    <ClCompile Include="TPiyavskiiMethod.cpp" />
     <ClCompile Include="TProblem.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -149,6 +150,7 @@
     <ClInclude Include="synonymous_types.h" />
     <ClInclude Include="THyperinterval.h" />
     <ClInclude Include="TMethodDivByThree.h" />
+    <ClInclude Include="TPiyavskiiMethod.h" />
     <ClInclude Include="TPoint.h" />
     <ClInclude Include="TProblem.h" />
   </ItemGroup>

@@ -11,16 +11,6 @@ THyperinterval::THyperinterval() : F_idThis(0), F_idPointA(0), F_idPointB(0), F_
 	for (auto& elem : F_maxLocalLipshEvaluations) elem = 0.0;
 }
 
-std::vector<LipschitzConstantValue>& THyperinterval::getLocalLipschitzConstantValues(std::vector<LipschitzConstantValue>& llcv) {
-	uint i = 0;
-	for (auto& elem : F_localsLipshEvaluations) {
-		llcv[i] = elem.back();
-		++i;
-	}
-
-	return llcv;
-}
-
 void THyperinterval::init_queues() {
 	for (auto& elem : F_localsLipshEvaluations)
 		for (uint i = 0; i < F_queue_depth; ++i) elem.push(0.0);

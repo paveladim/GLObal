@@ -49,7 +49,6 @@ public:
 	uint get_idEvaluationsB() const { return F_idPointB * (F_constraints + 1); }
 	uint get_div_tag() const { return MAX_EXPONENT_THREE - 1 - F_divisions / F_dimension; }
 	uint get_div_axis() const { return F_divisions % F_dimension; }
-	std::vector<LipschitzConstantValue>& const getLocalLipschitzConstantValues(std::vector<LipschitzConstantValue>& llcv);
 	double get_diagonal() const { return F_diagonal; } // получить размер диагонали гиперинтервала
 	double get_characteristic() const { return F_characteristic; } // получить значение характеристики гиперинтервала
 	void set_idThis(const uint& out_idThis) { F_idThis = out_idThis; } // установить гиперинтервалу его итендификатор
@@ -62,7 +61,7 @@ public:
 	// обновление оценок констант Липшица, поддержка длины очереди
 	void update_queuesLipshEvaluations(std::vector<LipschitzConstantValue>& new_llcv, const double& _delta);
 	// получить вектор максимальных локальных оценок констант
-	std::vector<LipschitzConstantValue> get_maxLipshEvaluations() const { return F_maxLocalLipshEvaluations; }
+	const std::vector<LipschitzConstantValue>& get_maxLipshEvaluations() const { return F_maxLocalLipshEvaluations; }
 };
 
 #endif

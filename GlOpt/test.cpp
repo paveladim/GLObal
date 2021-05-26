@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include "TMethodDivByThree.h"
+#include "TPiyavskiiMethod.h"
 
 FunctionsValues& f(FunctionsValues& res, const CoordinatesValues& x)
 {
@@ -17,9 +18,9 @@ int main() {
 	TProblem testProblem1(dim, cst, { 0, 0 }, { 1, 1 }, &f);
 	GainLipshConstant obj_const{ 1 };
 	GainLipshConstant cst_const{ 1 };
-	double beta = 0.3;
+	double beta = 0.5;
 
-	TMethodDivByThree testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta);
+	TPiyavskiiMethod testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta);
 	testMethod.launch_method();
 
 	return 0;
