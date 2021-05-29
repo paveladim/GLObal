@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "TMethodDivByThree.h"
 
 uint TPoint::F_dimension;
@@ -9,7 +10,7 @@ TMethodDivByThree::TMethodDivByThree(const uint& out_dim, const uint& out_constr
 	F_generated_points = 0;
 	F_generated_intervals = 0;
 	F_divide_axis = 0;
-	F_current_minimum = 0.0;
+	F_current_minimum = std::numeric_limits<double>::max();
 	F_id_current_minimum = 0;
 	transit_coord_1.resize(F_dimension);
 	transit_coord_2.resize(F_dimension);
@@ -50,8 +51,6 @@ void TMethodDivByThree::initialization() {
 }
 
 bool TMethodDivByThree::trisect_interval(const uint& id_divHyp) {
-	resize_points_deque();
-	resize_coords_deque();
 	THyperinterval& div = F_intervals[id_divHyp];
 	TPoint& point_a = F_points[div.get_idPointA()];
 	TPoint& point_b = F_points[div.get_idPointB()];
@@ -84,6 +83,8 @@ bool TMethodDivByThree::trisect_interval(const uint& id_divHyp) {
 	// если точка не нашлась, то порождаем новую
 	if (new_id_u == 0) {
 		new_id_u = get_new_id();
+		resize_points_deque();
+		resize_coords_deque();
 		F_points[new_id_u].F_idThis = new_id_u;
 		for (uint i = 0; i < F_dimension; ++i)
 			F_coords[F_points[new_id_u].get_id_coord() + i] = transit_coord_2[i];
@@ -98,6 +99,8 @@ bool TMethodDivByThree::trisect_interval(const uint& id_divHyp) {
 	// если точка не нашлась, то порождаем новую
 	if (new_id_v == 0) {
 		new_id_v = get_new_id();
+		resize_points_deque();
+		resize_coords_deque();
 		F_points[new_id_v].F_idThis = new_id_v;
 		for (uint i = 0; i < F_dimension; ++i)
 			F_coords[F_points[new_id_v].get_id_coord() + i] = transit_coord_1[i];
@@ -206,8 +209,32 @@ uint TMethodDivByThree::do_step(const uint& id_divHyp) {
 void TMethodDivByThree::launch_method() {
 	initialization();
 	uint id_current_interval = 0;
-	for (uint i = 0; i < 100; ++i) {
+	for (uint i = 0; i < 500; ++i) {
 		id_current_interval = do_step(id_current_interval);
 		std::cout << id_current_interval << std::endl;
+	}
+}
+
+void TMethodDivByThree::write_generated_points_to_file() {
+	std::ofstream out;          
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\points.txt"); 
+	if (out.is_open())
+	{
+		for (uint i = 0; i < F_generated_points * F_dimension; ++i)
+			out << F_coords[i] << std::endl;
+	}
+}
+
+void TMethodDivByThree::write_intervals_to_file() {
+	std::ofstream out;
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\hyp.txt");
+	if (out.is_open())
+	{
+		for (uint id_hyp = 0; id_hyp < F_generated_intervals; ++id_hyp) {
+			for (uint i = 0; i < F_dimension; ++i)
+				out << F_coords[F_intervals[id_hyp].get_idA() + i] << std::endl;
+			for (uint i = 0; i < F_dimension; ++i)
+				out << F_coords[F_intervals[id_hyp].get_idB() + i] << std::endl;
+		}
 	}
 }

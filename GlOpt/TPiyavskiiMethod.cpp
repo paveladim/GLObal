@@ -1,3 +1,5 @@
+#include <iostream>
+#include <fstream>
 #include "TPiyavskiiMethod.h"
 
 TPiyavskiiMethod::TPiyavskiiMethod(const uint& out_dim, const uint& out_constr, const uint& depth,
@@ -6,6 +8,42 @@ TPiyavskiiMethod::TPiyavskiiMethod(const uint& out_dim, const uint& out_constr, 
 	F_gainConstraints(out_gainCst), delta(0.0000000001) {
 	F_criticalSize = beta * sqrt(F_dimension * (CoordinateValue)MAX_POWER_THREE * (CoordinateValue)MAX_POWER_THREE);
 	does_LipshConstValue_change = false;
+}
+
+void TPiyavskiiMethod::initialization() {
+	THyperinterval::init_static(F_dimension, F_constraints, F_queueDepth);
+	resize_points_deque();
+	resize_coords_deque();
+
+	F_points[0].F_idThis = get_new_id();
+	F_points[1].F_idThis = get_new_id();
+
+	TPoint& a = F_points[0];
+	TPoint& b = F_points[1];
+
+	for (uint i = 0; i < F_dimension; ++i)
+		F_coords[a.F_idThis * F_dimension + i] = 0;
+
+	for (uint i = 0; i < F_dimension; ++i)
+		F_coords[b.F_idThis * F_dimension + i] = MAX_POWER_THREE;
+
+	compute_evaluations(a.F_idThis);
+	compute_evaluations(b.F_idThis);
+
+	resize_intervals_deque();
+	F_intervals[0].set_idPointA(a.F_idThis);
+	F_intervals[0].set_idPointB(b.F_idThis);
+	F_intervals[0].set_idThis(get_new_interval());
+	F_intervals[0].init_queues();
+	compute_diagonal(F_intervals[0].get_idThis());
+	compute_localLipshConst(F_intervals[0].get_idThis());
+
+	for (uint i = 0; i < F_constraints + 1; ++i)
+		if (F_globalLipshEvaluations[i] < F_intervals[0].get_maxLipshEvaluations()[i]) {
+			F_globalLipshEvaluations[i] = F_intervals[0].get_maxLipshEvaluations()[i];
+		}
+
+	compute_characteristic(F_intervals[0].get_idThis());
 }
 
 void TPiyavskiiMethod::compute_characteristic(const uint& id_Hyp) {
@@ -97,11 +135,41 @@ uint TPiyavskiiMethod::do_step(const uint& id_divHyp) {
 
 void TPiyavskiiMethod::launch_method() {
 	initialization();
-	compute_localLipshConst(0);
 	uint id_current_interval = 0;
-	for (uint i = 0; i < 100; ++i) {
-		id_current_interval = do_step(id_current_interval);
-		THyperinterval& hyp = F_intervals[id_current_interval];
-		F_current_minimum = std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]);
+	std::ofstream out;
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\minimums.txt");
+	if (out.is_open()) {
+		for (uint i = 0; i < 77; ++i) {
+			id_current_interval = do_step(id_current_interval);
+			THyperinterval& hyp = F_intervals[id_current_interval];
+
+			if (std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]) < F_current_minimum)
+				F_current_minimum = std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]);
+			out << F_current_minimum << std::endl;
+		}
+	}
+}
+
+void TPiyavskiiMethod::write_generated_points_to_file() {
+	std::ofstream out;
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\points.txt");
+	if (out.is_open())
+	{
+		for (uint i = 0; i < F_generated_points * F_dimension; ++i)
+			out << F_coords[i] << std::endl;
+	}
+}
+
+void TPiyavskiiMethod::write_intervals_to_file() {
+	std::ofstream out;
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\hyp.txt");
+	if (out.is_open())
+	{
+		for (uint id_hyp = 0; id_hyp < F_generated_intervals; ++id_hyp) {
+			for (uint i = 0; i < F_dimension; ++i)
+				out << F_coords[F_intervals[id_hyp].get_idA() + i] << std::endl;
+			for (uint i = 0; i < F_dimension; ++i)
+				out << F_coords[F_intervals[id_hyp].get_idB() + i] << std::endl;
+		}
 	}
 }

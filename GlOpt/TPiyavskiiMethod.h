@@ -15,6 +15,7 @@ public:
 	TPiyavskiiMethod(const uint& out_dim, const uint& out_constr, const uint& depth,
 		TProblem& out_prob, const GainLipshConstant& out_gainObj, const GainLipshConstant& out_gainCst, const double& beta);
 
+	virtual void initialization(); // инициализация гиперинтервала
 	virtual void compute_characteristic(const uint& id_Hyp); // вычислить характеристику
 	virtual uint choose_optimal_to_trisect(); // найти оптимальный для деления на три
 	void compute_localLipshConst(const uint& id_Hyp); // вычислить локальную оценку констант в гиперинтервале
@@ -22,6 +23,8 @@ public:
 	void update_all_characteristics(); // обновить характеристики всех гиперинтервалов
 	virtual uint do_step(const uint& if_divHyp); // совершить шаг метода
 	virtual void launch_method(); // запуск работы метода
+	void write_generated_points_to_file(); // записать в файл все порождённые методом точки испытания
+	void write_intervals_to_file(); // записать в файл точки активной диагонали всех гиперинтервалов
 };
 
 #endif

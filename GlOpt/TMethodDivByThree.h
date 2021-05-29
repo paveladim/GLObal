@@ -53,6 +53,8 @@ public:
     virtual uint choose_optimal_to_trisect(); // найти оптимальный дл€ делени€ на три
     virtual uint do_step(const uint& if_divHyp); // сделать шаг метода
     virtual void launch_method(); // дл€ тестировани€
+    void write_generated_points_to_file();
+    void write_intervals_to_file();
     // методы расширени€ деков
     void resize_points_deque() {
         if (F_points.size() - F_generated_points < 1)
