@@ -4,8 +4,7 @@
 #include "synonymous_types.h"
 #include "dicretization.h"
 
-class TProblem
-{
+class TProblem {
 public:
     enum class TProblemTypeError { OK };
 private:
@@ -19,8 +18,10 @@ private:
     TProblemTypeError Ferror{ TProblemTypeError::OK };
 public:
     TProblem() = delete;
-    TProblem(uint dim, uint constrCount, const CoordinatesValues& left_brd,
-        const CoordinatesValues& right_brd, const FunctionsCalculator& prob);
+    TProblem(uint dim, uint constrCount, 
+             const CoordinatesValues& left_brd,
+             const CoordinatesValues& right_brd,
+             const FunctionsCalculator& prob);
     ~TProblem() {}
 
     CoordinatesValues& decode_coordinates(const EncodedCoordinates& out); // расшифровать координаты

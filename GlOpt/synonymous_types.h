@@ -21,5 +21,6 @@ using GainLipshConstant = double;
 using FunctionsCalculators = std::vector<FunctionsCalculator>;
 using LipschitzConstantValue = double;
 using FeatureValue = double;
+using Vec = std::vector<double>;
 
 #endif

@@ -61,7 +61,8 @@ public:
 	// обновление оценок констант Липшица, поддержка длины очереди
 	void update_queuesLipshEvaluations(std::vector<LipschitzConstantValue>& new_llcv, const double& _delta);
 	// получить вектор максимальных локальных оценок констант
-	const std::vector<LipschitzConstantValue>& get_maxLipshEvaluations() const { return F_maxLocalLipshEvaluations; }
+	const std::vector<LipschitzConstantValue>& 
+	get_maxLipshEvaluations() const { return F_maxLocalLipshEvaluations; }
 };
 
 #endif

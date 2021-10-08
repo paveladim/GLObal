@@ -10,10 +10,17 @@ class TPiyavskiiMethod : protected TMethodDivByThree
 	GainLipshConstant F_gainConstraints; // константа завышения констант Липшица для ограничений
 	double delta; // параметр для осторожных локальных оценок
 	bool does_LipshConstValue_change; // изменилась ли какая-то из глобальных оценок констант Липшица
+	double eps; // для остановки по точности 
 public:
 	TPiyavskiiMethod() = delete;
-	TPiyavskiiMethod(const uint& out_dim, const uint& out_constr, const uint& depth,
-		TProblem& out_prob, const GainLipshConstant& out_gainObj, const GainLipshConstant& out_gainCst, const double& beta);
+	TPiyavskiiMethod(const uint& out_dim, 
+					 const uint& out_constr, 
+					 const uint& depth,
+					 TProblem& out_prob, 
+					 const GainLipshConstant& out_gainObj, 
+					 const GainLipshConstant& out_gainCst, 
+					 const double& beta, 
+					 const double& _eps);
 
 	virtual void initialization(); // инициализация гиперинтервала
 	virtual void compute_characteristic(const uint& id_Hyp); // вычислить характеристику

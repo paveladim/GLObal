@@ -209,7 +209,7 @@ uint TMethodDivByThree::do_step(const uint& id_divHyp) {
 void TMethodDivByThree::launch_method() {
 	initialization();
 	uint id_current_interval = 0;
-	for (uint i = 0; i < 500; ++i) {
+	for (uint i = 0; i < 364; ++i) {
 		id_current_interval = do_step(id_current_interval);
 		std::cout << id_current_interval << std::endl;
 	}

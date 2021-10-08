@@ -139,6 +139,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Matrix.cpp" />
+    <ClCompile Include="SimplexMethod.cpp" />
     <ClCompile Include="test.cpp" />
     <ClCompile Include="THyperinterval.cpp" />
     <ClCompile Include="TMethodDivByThree.cpp" />
@@ -147,6 +149,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dicretization.h" />
+    <ClInclude Include="Matrix.h" />
+    <ClInclude Include="SimplexMethod.h" />
     <ClInclude Include="synonymous_types.h" />
     <ClInclude Include="THyperinterval.h" />
     <ClInclude Include="TMethodDivByThree.h" />

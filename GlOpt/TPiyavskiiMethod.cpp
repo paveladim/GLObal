@@ -2,11 +2,21 @@
 #include <fstream>
 #include "TPiyavskiiMethod.h"
 
-TPiyavskiiMethod::TPiyavskiiMethod(const uint& out_dim, const uint& out_constr, const uint& depth,
-	TProblem& out_prob, const GainLipshConstant& out_gainObj, const GainLipshConstant& out_gainCst, const double& beta) : 
-	TMethodDivByThree(out_dim, out_constr, depth, out_prob), F_gainObjective(out_gainObj),
-	F_gainConstraints(out_gainCst), delta(0.0000000001) {
-	F_criticalSize = beta * sqrt(F_dimension * (CoordinateValue)MAX_POWER_THREE * (CoordinateValue)MAX_POWER_THREE);
+TPiyavskiiMethod::TPiyavskiiMethod(const uint& out_dim, 
+								   const uint& out_constr, 
+								   const uint& depth,
+								   TProblem& out_prob, 
+								   const GainLipshConstant& out_gainObj, 
+								   const GainLipshConstant& out_gainCst, 
+								   const double& beta, 
+								   const double& _eps) : 
+	TMethodDivByThree(out_dim, out_constr, depth, out_prob), 
+	F_gainObjective(out_gainObj),
+	F_gainConstraints(out_gainCst), 
+	delta(0.0000000001), 
+	eps(_eps) {
+	F_criticalSize = 
+		beta * sqrt(F_dimension * (CoordinateValue)MAX_POWER_THREE * (CoordinateValue)MAX_POWER_THREE);
 	does_LipshConstValue_change = false;
 }
 
@@ -139,7 +149,9 @@ void TPiyavskiiMethod::launch_method() {
 	std::ofstream out;
 	out.open("D:\\materials\\projects\\visual_hyperinterval\\minimums.txt");
 	if (out.is_open()) {
-		for (uint i = 0; i < 77; ++i) {
+		for (uint i = 0;
+			(i < 200) && (std::abs(F_current_minimum - F_intervals[id_current_interval].get_characteristic()) >= eps);
+			++i) {
 			id_current_interval = do_step(id_current_interval);
 			THyperinterval& hyp = F_intervals[id_current_interval];
 
@@ -147,6 +159,8 @@ void TPiyavskiiMethod::launch_method() {
 				F_current_minimum = std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]);
 			out << F_current_minimum << std::endl;
 		}
+
+		std::cout << "Current minimum: " << F_current_minimum << std::endl;
 	}
 }
 
@@ -173,3 +187,5 @@ void TPiyavskiiMethod::write_intervals_to_file() {
 		}
 	}
 }
+
+/*&& (std::abs(F_current_minimum - F_intervals[id_current_interval].get_characteristic()) >= eps*/
