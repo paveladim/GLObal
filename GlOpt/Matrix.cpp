@@ -69,6 +69,36 @@ void Matrix::delete_column(const uint16_t column) {
 	}
 }
 
+int Matrix::compare_lex(const uint16_t& i, const uint16_t& j) {
+	int result = 0;
+	// разность сравниваемых векторов
+	Vec diff(_columns);
+	// сначала проверим что если вектор v1 или v2 нулевые, то они это признак того,
+	// что они максимальные
+	bool flagV1 = true;
+	bool flagV2 = true;
+	for (uint16_t k = 0; k < _columns; ++k)
+	{
+		if (_matrix[k][i] != 0) flagV1 = false; //первый точно не нулевой
+		if (_matrix[k][j] != 0) flagV2 = false; //первый точно не нулевой
+		diff[k] = _matrix[k][i] - _matrix[k][j];
+	}
+	if (flagV1 && flagV2) return 0; //оба нулевые
+	if (flagV1) return 1;
+	if (flagV2) return -1;
+
+	bool f = true;
+	// проходим по все эллементам и смотрим чтобы первый ненулевой был > 0
+	for (uint16_t k = 0; ((k < _columns) && (f)); ++k)
+		if (diff[k] != 0) {
+			if (diff[k] > 0) result = 1;
+			if (diff[k] < 0) result = -1;
+			f = false;
+		}
+
+	return result;
+}
+
 void Matrix::attach_matrix(const Matrix& out) {
 	if (_rows != out._rows) return;
 	std::vector<Vec> tmp(_matrix);

@@ -4,8 +4,12 @@
 #include "synonymous_types.h"
 #include "Matrix.h"
 
+enum class Solution{exists, unlimited, inconsistent};
+
 class SimplexMethod
 {
+	// состояние решения
+	Solution _state;
 	// количество переменных
 	uint16_t _n;
 	// количество ограничений
@@ -33,6 +37,12 @@ class SimplexMethod
 							    const std::vector<bool>& places);
 	// гауссово преобразование
 	void gauss_transform(const uint16_t& s, const uint16_t& r);
+	// найти ведущий столбец
+	uint16_t get_leading_column();
+	// найти ведущую строку
+	uint16_t get_leading_row(const uint16_t&);
+	// шаг симплекс метода
+	int step();
 public:
 	SimplexMethod() = delete;
 	SimplexMethod(const Vec& c, const Vec& b, const Matrix& m);

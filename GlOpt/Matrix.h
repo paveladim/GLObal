@@ -28,6 +28,8 @@ public:
 		_matrix[i][j] *= mul;
 	}
 
+	int compare_lex(const uint16_t& i, const uint16_t& j);
+
 	void attach_matrix(const Matrix& out);
 };
 

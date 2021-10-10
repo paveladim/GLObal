@@ -126,6 +126,75 @@ void SimplexMethod::gauss_transform(const uint16_t& r, const uint16_t& s) {
 	_b[r] = _b[r] / coeff;
 }
 
+uint16_t SimplexMethod::get_leading_column() {
+	uint16_t column = std::numeric_limits<uint16_t>::max();
+	double minimum = std::numeric_limits<double>::max();
+
+	for (uint16_t i = 0; i < _n; ++i)
+		if (_c[i] < 0)
+		{
+			if (_c[i] < minimum)
+			{
+				minimum = _c[i];
+				column = i;
+			}
+		}
+	return column;
+}
+
+uint16_t SimplexMethod::get_leading_row(const uint16_t& s) {
+	uint16_t rowNumber = std::numeric_limits<uint16_t>::max();
+	// кол-во положительных эл-ов в ведущем столбце
+	uint16_t cnt_pos = 0;
+	Matrix lex_vec(_m, _n + 1, 'o');
+	// номер строки лексикографически миним-й вектора
+	uint16_t min_lex_vec;
+	// вектор ведущего столбца
+	Vec lead_row(_m);
+
+	for (uint16_t i = 0; i < _m; ++i)
+	{
+		lead_row[i] = _matrix.get_value(i, s); // заполняем ведущий столбец
+		if (lead_row[i] > 0) //выбираем из ведущего столбца строку с положительным эл-ом
+		{
+			cnt_pos++;
+			// составляем вектор для сравнения
+			for (uint16_t j = 0; j < _n; ++j)
+				lex_vec.set_value(i, j + 1, _matrix.get_value(i, j) / lead_row[i]);
+
+			lex_vec.set_value(i, 0, _b[i] / lead_row[i]);
+		}
+	}
+
+	// если нет положительных эл-ов в ведущем столбце, то значение целевой ф-ии не ограничено
+	if (cnt_pos == 0) return rowNumber;
+
+	// выбирем лексиграфически минимальный вектор:
+	min_lex_vec = 0;
+	for (uint16_t i = 1; i < _m; ++i)
+		if (lex_vec.compare_lex(min_lex_vec, i) > 0) min_lex_vec = i;
+
+	rowNumber = min_lex_vec; //  номер лексикографически минимального вектора
+	return rowNumber;
+}
+
+int SimplexMethod::step() {
+	//Шаг 1.
+	uint16_t s = get_leading_column(); // выбираем ведущий столбец s
+	// все эл-ты вектора С неотрицательны, то соответствующее решение оптимально
+	if (s == std::numeric_limits<uint16_t>::max()) return 0;
+	//Шаг 2.
+	uint16_t r = get_leading_row(s); //выбираем ведущую строку
+	// значение целевой ф-ии неограничено
+	if (r == std::numeric_limits<uint16_t>::max()) return -1;
+	//Шаг 3.
+	gauss_transform(r, s); //выполняем шаг гауссова преобразования
+	//Шаг 4.
+	_basis[r] = s; // устанавливаем новую базисную переменной взамен старой
+
+	return 1;
+}
+
 void SimplexMethod::find_solution() {
 	uint16_t imit_basis_size = find_basis();
 	if (imit_basis_size != 0) {
@@ -140,6 +209,13 @@ void SimplexMethod::find_solution() {
 
 			gauss_transform(tmp1, tmp2);
 		}
+
+		int result_state = step();
+		while (result_state != 0) {
+			result_state = step();
+			if (result_state == -1) _state = Solution::unlimited;
+		}
+
 	}
 
 	_c.resize(_n);
@@ -154,5 +230,11 @@ void SimplexMethod::find_solution() {
 		for (uint16_t i = 0; i < _m; ++i)
 			if (_matrix.get_value(i, tmp1) == 1) tmp2 = i;
 		gauss_transform(tmp1, tmp2);
+	}
+
+	int result_state_ = step();
+	while (result_state_ != 0) {
+		result_state_ = step();
+		if (result_state_ == -1) _state = Solution::unlimited;
 	}
 }
