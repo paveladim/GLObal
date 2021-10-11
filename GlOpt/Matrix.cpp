@@ -55,18 +55,24 @@ Matrix& Matrix::operator=(const Matrix& out) {
 	return *this;
 }
 
-void Matrix::delete_row(const uint16_t row) {
-	uint16_t i = 0;
-	for (auto it = _matrix.begin(); it != _matrix.end(); ++it, ++i)
-		if (i == row - 1) _matrix.erase(it);
+void Matrix::delete_row(const uint16_t& row) {
+	auto it = _matrix.begin();
+	for (uint16_t i = 0; i < _rows; ++i)
+		if (i < row) ++it;
+
+	_matrix.erase(it);
+	--_rows;
 }
 
-void Matrix::delete_column(const uint16_t column) {
+void Matrix::delete_column(const uint16_t& col) {
 	for (uint16_t i = 0; i < _rows; ++i) {
-		uint16_t j = 0;
-		for (auto elem = _matrix[i].begin(); elem != _matrix[i].end(); ++elem, ++j)
-			if (j == column) _matrix[i].erase(elem);
+		auto it = _matrix[i].begin();
+		for (uint16_t j = 0; j < _columns; ++j)
+			if (j < col) ++it;
+		_matrix[i].erase(it);
 	}
+
+	--_columns;
 }
 
 int Matrix::compare_lex(const uint16_t& i, const uint16_t& j) {

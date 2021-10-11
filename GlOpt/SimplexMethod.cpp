@@ -269,8 +269,50 @@ void SimplexMethod::delete_from_c(const uint16_t& s) {
 	_c = c_tmp;
 }
 
-void SimplexMethod::exclude_imit_variables(const uint16_t& s) {
+void SimplexMethod::delete_from_b(const uint16_t& r) {
+	auto it = _b.begin();
+	for (uint16_t i = 0; i < _m; ++i)
+		if (i < r) ++it;
+	_b.erase(it);
+}
 
+void SimplexMethod::exclude_imit_variables(const uint16_t& s,
+										   const uint16_t& imit_basis) {
+	uint16_t r = 0;
+	bool isNull = true;
+	// находим такое r, для которого q(r,s) = 1
+	for (uint16_t i = 0; i < _m; ++i)
+		if (_matrix.get_value(i, s) == 1) r = i;
+
+	for (uint16_t j = 0; j < _n - imit_basis; ++j)
+	{
+		if (_matrix.get_value(r, j) != 0)
+		{
+			isNull = false;
+			gauss_transform(j, r);
+			// устанавливаем новую базисную переменной взамен старой
+			_basis[r] = j;
+			//удаляем s-ый столбец
+			_matrix.delete_column(s);
+			delete_from_c(s);
+			--_n;
+			deleteElemFromImitBasis(s);
+			reBasis(s);
+			break;
+		}
+
+	}
+	if (isNull == true) // а) строка r избыточна, нужно её удалить. Тогда столбец s будет полностью нулевым, поэтому его тоже удалим.
+	{
+		_matrix.delete_row(r);
+		delete_from_b(r);
+		--_m;
+		_matrix.delete_column(s);
+		delete_from_c(s);
+		--_n;
+		deleteElemFromImitBasis(s);
+		reBasis(s);
+	}
 }
 
 void SimplexMethod::find_solution() {
@@ -306,7 +348,7 @@ void SimplexMethod::find_solution() {
 					_imit_basis.end()) {
 					flag = true;
 					// исключаем исскуственный столбец i
-					exclude_imit_variables(_imit_basis[i]);
+					exclude_imit_variables(_imit_basis[i], imit_basis_size);
 					--i;
 				}
 				flag = false;

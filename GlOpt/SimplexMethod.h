@@ -72,7 +72,8 @@ class SimplexMethod
 	int calculate_result(const bool& phase);
 	void delete_imit_column(uint16_t& imit_basis);
 	void delete_from_c(const uint16_t& s);
-	void exclude_imit_variables(const uint16_t& s);
+	void delete_from_b(const uint16_t& r);
+	void exclude_imit_variables(const uint16_t& s, const uint16_t& imit_basis);
 public:
 	SimplexMethod() = delete;
 	SimplexMethod(const Vec& c, const Vec& b, const Matrix& m);

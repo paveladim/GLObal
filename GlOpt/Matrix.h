@@ -15,8 +15,7 @@ public:
 
 	Matrix& operator=(const Matrix& out);
 
-	void delete_row(const uint16_t row);
-	void delete_column(const uint16_t column);
+	void delete_row(const uint16_t& row);
 	double get_value(const uint16_t& i, const uint16_t& j) const { return _matrix[i][j]; }
 	void set_value(const uint16_t& i, const uint16_t& j, const double& val) {
 		_matrix[i][j] = val;
@@ -28,6 +27,7 @@ public:
 		_matrix[i][j] *= mul;
 	}
 
+	void delete_column(const uint16_t& col);
 	int compare_lex(const uint16_t& i, const uint16_t& j);
 
 	void attach_matrix(const Matrix& out);
