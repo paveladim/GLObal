@@ -6,7 +6,8 @@ SimplexMethod::SimplexMethod(const Vec& c, const Vec& b, const Matrix& m) :
 	_c(c),
 	_c_copy(c), 
 	_b(b),
-	_matrix(m) {
+	_matrix(m),
+	_result(_n, _m) {
 
 }
 
@@ -195,8 +196,86 @@ int SimplexMethod::step() {
 	return 1;
 }
 
+int SimplexMethod::calculate_result(const bool& phase) {
+	double res = 0;
+	// выделяем память под вектор решения
+	x.resize(_n);
+	_result.change_size(_n, _m);
+
+	for (uint16_t i = 0; i < _m; ++i) {
+		x[_basis[i]] = _b[i]; // вектор, соответсвующий текущему базису
+		_result._basis[i] = _basis[i];
+		_result._x[_basis[i]] = _b[i];
+	}
+
+	for (uint16_t j = 0; j < _n; ++j) {
+		if (!phase) { res += _c_ccopy[j] * x[j]; _result._value = res; }
+		else { res += _c_copy[j] * x[j]; _result._value = res; }
+	}
+
+	return res;
+}
+
+void SimplexMethod::delete_imit_column(uint16_t& imit_basis) {
+	Matrix A_tmp(_m, _n - imit_basis, 'n');
+
+	for (uint16_t i = 0; i < _m; ++i)
+		for (uint16_t j = 0; j < _n - imit_basis; ++j)
+			A_tmp.set_value(i, j, _matrix.get_value(i, j));
+
+	for (uint16_t i = 0; i < imit_basis; ++i) {
+		delete_from_c(_imit_basis[i]);
+		--_n;
+	}
+
+	imit_basis = 0;
+	_imit_basis.resize(imit_basis);
+	_matrix = A_tmp;
+}
+
+void SimplexMethod::delete_from_c(const uint16_t& s) {
+	bool c_copyCont = false;
+	bool c_copy1Cont = false;
+	if (_c_copy.size() > s) c_copyCont = true;
+	if (_c_ccopy.size() > s) c_copy1Cont = true;
+
+	Vec c_tmp(_n - 1);
+	Vec c_copy_tmp(_n - 1);
+	Vec c_ccopy_tmp(_n - 1);
+	
+	for (uint16_t j = s + 1; j < _n; ++j) {
+		_c[j - 1] = _c[j];
+		if (c_copyCont) _c_copy[j - 1] = _c_copy[j];
+		if (c_copy1Cont) _c_ccopy[j - 1] = _c_ccopy[j];
+	}
+
+	for (uint16_t i = 0; i < _n - 1; ++i) {
+		c_tmp[i] = _c[i];
+		if (c_copyCont) c_copy_tmp[i] = _c_copy[i];
+		if (c_copy1Cont) c_ccopy_tmp[i] = _c_ccopy[i];
+	}
+
+	if (c_copyCont) {
+		_c_copy.resize(_n - 1);
+		_c_copy = c_copy_tmp;
+	}
+
+	if (c_copy1Cont) {
+		_c_ccopy.resize(_n - 1);
+		_c_ccopy = c_ccopy_tmp;
+	}
+
+	_c.resize(_n - 1);
+	_c = c_tmp;
+}
+
+void SimplexMethod::exclude_imit_variables(const uint16_t& s) {
+
+}
+
 void SimplexMethod::find_solution() {
 	uint16_t imit_basis_size = find_basis();
+	double calc_res;
 	if (imit_basis_size != 0) {
 		uint16_t tmp1 = 0;
 		uint16_t tmp2 = 0;
@@ -216,6 +295,28 @@ void SimplexMethod::find_solution() {
 			if (result_state == -1) _state = Solution::unlimited;
 		}
 
+		calc_res = calculate_result(false);
+
+		if (calc_res > 0) { _result._state = Solution::inconsistent; return; }
+		else if (calc_res < 0) { _result._state = Solution::inconsistent; return; }
+		else {
+			bool flag = false; // содержит ли базис искусственные переменные
+			for (uint16_t i = 0; i < imit_basis_size; ++i) {
+				if (std::find(_imit_basis.begin(), _imit_basis.end(), _imit_basis[i]) != 
+					_imit_basis.end()) {
+					flag = true;
+					// исключаем исскуственный столбец i
+					exclude_imit_variables(_imit_basis[i]);
+					--i;
+				}
+				flag = false;
+			}
+
+			// случай 2: база не содержит номера искусственных переменных, 
+			// значит база допустима для исходной задачи
+			// убираем искусственные столбцы
+			if (!flag) delete_imit_column(imit_basis_size);
+		}
 	}
 
 	_c.resize(_n);
@@ -236,5 +337,6 @@ void SimplexMethod::find_solution() {
 	while (result_state_ != 0) {
 		result_state_ = step();
 		if (result_state_ == -1) _state = Solution::unlimited;
+		calc_res = calculate_result(true);
 	}
 }
