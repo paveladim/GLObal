@@ -277,7 +277,7 @@ void SimplexMethod::delete_from_b(const uint16_t& r) {
 }
 
 void SimplexMethod::exclude_imit_variables(const uint16_t& s,
-										   const uint16_t& imit_basis) {
+										   uint16_t& imit_basis) {
 	uint16_t r = 0;
 	bool isNull = true;
 	// находим такое r, для которого q(r,s) = 1
@@ -296,23 +296,59 @@ void SimplexMethod::exclude_imit_variables(const uint16_t& s,
 			_matrix.delete_column(s);
 			delete_from_c(s);
 			--_n;
-			deleteElemFromImitBasis(s);
-			reBasis(s);
+			del_from_imit_basis(s, imit_basis);
+			rebasis(s);
 			break;
 		}
-
 	}
-	if (isNull == true) // а) строка r избыточна, нужно её удалить. Тогда столбец s будет полностью нулевым, поэтому его тоже удалим.
-	{
+
+	// а) строка r избыточна, нужно её удалить. 
+	// Тогда столбец s будет полностью нулевым, поэтому его тоже удалим.
+	if (isNull == true) {
 		_matrix.delete_row(r);
 		delete_from_b(r);
 		--_m;
 		_matrix.delete_column(s);
 		delete_from_c(s);
 		--_n;
-		deleteElemFromImitBasis(s);
-		reBasis(s);
+		del_from_imit_basis(s, imit_basis);
+		rebasis(s);
 	}
+}
+
+void SimplexMethod::del_from_imit_basis(const uint16_t& s, uint16_t& imit_basis) {
+	for (uint16_t i = 0; i < imit_basis; ++i)
+		if (_imit_basis[i] == s)
+			for (uint16_t j = i + 1; j < imit_basis; ++j)
+				_imit_basis[j - 1] = _imit_basis[j];
+
+	--imit_basis;
+	std::vector<int16_t> imit_basis_tmp(imit_basis);
+	for (uint16_t i = 0; i < imit_basis; ++i)
+		imit_basis_tmp[i] = _imit_basis[i];
+
+	_imit_basis.resize(imit_basis);
+	_imit_basis = imit_basis_tmp;
+
+	for (uint16_t i = 0; i < imit_basis; ++i)
+		if (_imit_basis[i] > s) --_imit_basis[i];
+}
+
+void SimplexMethod::rebasis(const uint16_t& s) {
+	for (uint16_t i = 0; i < _basis.size(); ++i)
+		if (_basis[i] == s)
+			for (uint16_t j = i + 1; j < _basis.size(); ++j)
+				_basis[j - 1] = _basis[j];
+
+	std::vector<int16_t> basis_tmp(_m);
+	for (uint16_t i = 0; i < _m; ++i)
+		basis_tmp[i] = _basis[i];
+
+	_basis.resize(_m);
+	_basis = basis_tmp;
+
+	for (uint16_t i = 0; i < _m; ++i)
+		if (_basis[i] > s) --_basis[i];
 }
 
 void SimplexMethod::find_solution() {
