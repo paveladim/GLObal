@@ -5,6 +5,9 @@
 #include <vector>
 #include "TMethodDivByThree.h"
 #include "TPiyavskiiMethod.h"
+#include "TSimplePMwithoutSM.h"
+#include "Matrix.h"
+#include "SimplexMethod.h"
 
 FunctionsValues& f(FunctionsValues& res, const CoordinatesValues& x)
 {
@@ -22,6 +25,13 @@ FunctionsValues& g(FunctionsValues& res, const CoordinatesValues& x)
 }
 
 int main() {
+	/*std::vector<Vec> vec{{3.0, 4.0, 1.0, 0.0, 0.0}, {3.0, 1.0, 0.0, 1.0, 0.0}, {1.0, 0.0, 0.0, 0.0, 1.0}};
+	Vec c{ -2.0, -1.0, 0.0, 0.0, 0.0 };
+	Vec b{ 32.0, 17.0, 5.0 };
+	Matrix m(vec);
+	SimplexMethod sm(c, b, m);
+	sm.find_solution(); */
+
 	THyperinterval test;
 	uint dim{ 2 };
 	uint cst{ 1 };
@@ -33,7 +43,8 @@ int main() {
 	double eps = 1e-8;
 
 	//TMethodDivByThree testMethod(dim, cst, dep, testProblem1);
-	TPiyavskiiMethod testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps);
+	//TPiyavskiiMethod testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps);
+	TSimplePMwithoutSM testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps);
 	testMethod.launch_method();
 	testMethod.write_generated_points_to_file();
 	testMethod.write_intervals_to_file();

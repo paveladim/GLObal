@@ -38,6 +38,17 @@ Matrix::Matrix(const Matrix& out) :
 			_matrix[i][j] = out._matrix[i][j];
 }
 
+Matrix::Matrix(const std::vector<Vec>& matrix) :
+	_rows(matrix.size()),
+	_columns(matrix[0].size()) {
+	_matrix.resize(_rows);
+	for (auto& elem : _matrix) elem.resize(_columns);
+
+	for (uint16_t i = 0; i < _rows; ++i)
+		for (uint16_t j = 0; j < _columns; ++j)
+			_matrix[i][j] = matrix[i][j];
+}
+
 Matrix& Matrix::operator=(const Matrix& out) {
 	if (this != &out) {
 		_rows = out._rows;
@@ -83,7 +94,7 @@ int Matrix::compare_lex(const uint16_t& i, const uint16_t& j) {
 	// что они максимальные
 	bool flagV1 = true;
 	bool flagV2 = true;
-	for (uint16_t k = 0; k < _columns; ++k)
+	for (uint16_t k = 0; k < _rows; ++k)
 	{
 		if (_matrix[k][i] != 0) flagV1 = false; //первый точно не нулевой
 		if (_matrix[k][j] != 0) flagV2 = false; //первый точно не нулевой
@@ -95,7 +106,7 @@ int Matrix::compare_lex(const uint16_t& i, const uint16_t& j) {
 
 	bool f = true;
 	// проходим по все эллементам и смотрим чтобы первый ненулевой был > 0
-	for (uint16_t k = 0; ((k < _columns) && (f)); ++k)
+	for (uint16_t k = 0; ((k < _rows) && (f)); ++k)
 		if (diff[k] != 0) {
 			if (diff[k] > 0) result = 1;
 			if (diff[k] < 0) result = -1;

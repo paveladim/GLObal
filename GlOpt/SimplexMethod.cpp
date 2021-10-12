@@ -68,7 +68,7 @@ void SimplexMethod::create_imitation_basis(const uint16_t& basis_size,
 	_matrix.attach_matrix(imitation_matrix);
 
 	_imit_basis.resize(basis_size);
-	uint16_t j = 0;
+	j = 0;
 	for (uint16_t i = _n; j < basis_size; ++i) {
 		//добавили в допустимый базис искусственную переменную
 		_imit_basis[j] = i;
@@ -147,7 +147,7 @@ uint16_t SimplexMethod::get_leading_row(const uint16_t& s) {
 	uint16_t rowNumber = std::numeric_limits<uint16_t>::max();
 	// кол-во положительных эл-ов в ведущем столбце
 	uint16_t cnt_pos = 0;
-	Matrix lex_vec(_m, _n + 1, 'o');
+	Matrix lex_vec(_m, _n + 1, 'n');
 	// номер строки лексикографически миним-й вектора
 	uint16_t min_lex_vec;
 	// вектор ведущего столбца
@@ -172,11 +172,11 @@ uint16_t SimplexMethod::get_leading_row(const uint16_t& s) {
 
 	// выбирем лексиграфически минимальный вектор:
 	min_lex_vec = 0;
-	for (uint16_t i = 1; i < _m; ++i)
+	for (uint16_t i = 1; i < _n; ++i)
 		if (lex_vec.compare_lex(min_lex_vec, i) > 0) min_lex_vec = i;
 
 	rowNumber = min_lex_vec; //  номер лексикографически минимального вектора
-	return rowNumber;
+	return rowNumber - 2;
 }
 
 int SimplexMethod::step() {
@@ -364,7 +364,7 @@ void SimplexMethod::find_solution() {
 			for (uint i = 0; i < _m; ++i)
 				if (_matrix.get_value(i, tmp1) == 1) tmp2 = i;
 
-			gauss_transform(tmp1, tmp2);
+			gauss_transform(tmp2, tmp1);
 		}
 
 		int result_state = step();
@@ -408,7 +408,7 @@ void SimplexMethod::find_solution() {
 		tmp1 = _basis[k];
 		for (uint16_t i = 0; i < _m; ++i)
 			if (_matrix.get_value(i, tmp1) == 1) tmp2 = i;
-		gauss_transform(tmp1, tmp2);
+		gauss_transform(tmp2, tmp1);
 	}
 
 	int result_state_ = step();

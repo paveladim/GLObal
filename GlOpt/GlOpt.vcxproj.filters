@@ -36,6 +36,9 @@
     <ClCompile Include="SimplexMethod.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="TSimplePMwithoutSM.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="THyperinterval.h">
@@ -63,6 +66,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="SimplexMethod.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="TSimplePMwithoutSM.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

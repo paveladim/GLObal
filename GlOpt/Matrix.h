@@ -12,6 +12,7 @@ public:
 	Matrix() : _rows(0), _columns(0) {}
 	Matrix(const uint16_t& rows, const uint16_t& columns, const char& mode);
 	Matrix(const Matrix& out);
+	Matrix(const std::vector<Vec>& matrix);
 
 	Matrix& operator=(const Matrix& out);
 

@@ -146,6 +146,7 @@
     <ClCompile Include="TMethodDivByThree.cpp" />
     <ClCompile Include="TPiyavskiiMethod.cpp" />
     <ClCompile Include="TProblem.cpp" />
+    <ClCompile Include="TSimplePMwithoutSM.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dicretization.h" />
@@ -157,6 +158,7 @@
     <ClInclude Include="TPiyavskiiMethod.h" />
     <ClInclude Include="TPoint.h" />
     <ClInclude Include="TProblem.h" />
+    <ClInclude Include="TSimplePMwithoutSM.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
