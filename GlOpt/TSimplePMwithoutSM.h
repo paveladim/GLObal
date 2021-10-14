@@ -8,6 +8,7 @@ class TSimplePMwithoutSM : protected TMethodDivByThree {
 	GainLipshConstant F_gainObjective; // константа завышения константы Липшица для целевой функции
 	GainLipshConstant F_gainConstraints; // константа завышения констант Липшица для ограничений
 	double delta; // параметр для осторожных локальных оценок
+	double nu; // для отступов от границ
 	bool does_LipshConstValue_change; // изменилась ли какая-то из глобальных оценок констант Липшица
 	double eps; // для остановки по точности
 	uint F_iter;
@@ -20,7 +21,8 @@ public:
 					   const GainLipshConstant& out_gainObj,
 					   const GainLipshConstant& out_gainCst,
 					   const double& beta,
-					   const double& _eps);
+					   const double& _eps,
+					   const double& nu);
 
 	virtual void initialization(); // инициализация гиперинтервала
 	virtual void compute_characteristic(const uint& id_Hyp); // вычислить характеристику

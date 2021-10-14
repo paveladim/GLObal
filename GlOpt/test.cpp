@@ -36,15 +36,16 @@ int main() {
 	uint dim{ 2 };
 	uint cst{ 1 };
 	uint dep{ 3 };
-	TProblem testProblem1(dim, cst, { 0, 0 }, { 1, 1 }, &f);
+	TProblem testProblem1(dim, cst, { 0, 0 }, { 1, 1 }, &g);
 	GainLipshConstant obj_const{ 1 };
 	GainLipshConstant cst_const{ 1 };
 	double beta = 1e-8;
 	double eps = 1e-8;
+	double nu = 1e-4;
 
 	//TMethodDivByThree testMethod(dim, cst, dep, testProblem1);
 	//TPiyavskiiMethod testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps);
-	TSimplePMwithoutSM testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps);
+	TSimplePMwithoutSM testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps, nu);
 	testMethod.launch_method();
 	testMethod.write_generated_points_to_file();
 	testMethod.write_intervals_to_file();

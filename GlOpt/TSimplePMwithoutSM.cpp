@@ -9,12 +9,15 @@ TSimplePMwithoutSM::TSimplePMwithoutSM(const uint& out_dim,
 									   const GainLipshConstant& out_gainObj,
 									   const GainLipshConstant& out_gainCst,
 									   const double& beta,
-									   const double& _eps) :
+									   const double& _eps,
+									   const double& _nu) :
 	TMethodDivByThree(out_dim, out_constr, depth, out_prob),
 	F_gainObjective(out_gainObj),
 	F_gainConstraints(out_gainCst),
 	delta(0.0000000001),
-	eps(_eps) {
+	eps(_eps),
+	nu(_nu),
+	F_iter(0) {
 	F_criticalSize =
 		beta * sqrt(F_dimension * (CoordinateValue)MAX_POWER_THREE * (CoordinateValue)MAX_POWER_THREE);
 	does_LipshConstValue_change = false;
@@ -58,15 +61,59 @@ void TSimplePMwithoutSM::initialization() {
 
 void TSimplePMwithoutSM::compute_characteristic(const uint& id_Hyp) {
 	THyperinterval& hyp = F_intervals[id_Hyp];
-	double charact = 0;
+	double mixed_lipshEvaluation = 0;
+	double charact = 0.0;
 
 	if (hyp.get_diagonal() < F_criticalSize) {
 		double ratio = hyp.get_diagonal() / F_criticalSize;
-		charact = F_gainObjective * F_globalLipshEvaluations[0];
-		charact += (1 - ratio) * hyp.get_maxLipshEvaluations()[0];
+		mixed_lipshEvaluation = F_gainObjective * F_globalLipshEvaluations[0];
+		mixed_lipshEvaluation += (1 - ratio) * hyp.get_maxLipshEvaluations()[0];
 	}
 	else {
-		charact = F_globalLipshEvaluations[0];
+		mixed_lipshEvaluation = F_globalLipshEvaluations[0];
+	}
+
+	double e = 0.0;
+	uint id_A = F_intervals[id_Hyp].get_idA();
+	uint id_B = F_intervals[id_Hyp].get_idB();
+	for (uint i = 0; i < F_dimension; ++i) {
+		double diff = double(F_coords[id_B + i]) - double(F_coords[id_A + i]);
+		e += (diff * diff);
+	}
+
+	e = sqrt(e) * 0.5;
+	id_A = F_intervals[id_Hyp].get_idEvaluationsA();
+	id_B = F_intervals[id_Hyp].get_idEvaluationsB();
+
+	if (mixed_lipshEvaluation > 0) {
+		double apex = F_evaluations[id_A] - F_evaluations[id_B];
+		apex = 0.5 * apex / (mixed_lipshEvaluation * e);
+
+		double new_apex = apex;
+		if (apex <= -e) new_apex = -e + nu * 2 * e;
+		else if (apex >= e) new_apex = e - nu * 2 * e;
+		else if (e + apex - nu < std::numeric_limits<double>::epsilon())
+			new_apex = -e + nu * 2 * e;
+		else if (e - apex - nu < std::numeric_limits<double>::epsilon())
+			new_apex = e - nu * 2 * e;
+
+		charact = -F_evaluations[id_A] * (new_apex - e) * 0.5 / e;
+		charact = charact + F_evaluations[id_B] * (new_apex + e) * 0.5 / e;
+		charact = charact + 0.5 * mixed_lipshEvaluation * (new_apex * new_apex - e * e);
+	}
+	else {
+		double new_apex_1 = -e + nu * 2 * e;
+		double new_apex_2 = e - nu * 2 * e;
+
+		double charact_1 = -F_evaluations[id_A] * (new_apex_1 - e) * 0.5 / e;
+		charact_1 = charact_1 + F_evaluations[id_B] * (new_apex_1 + e) * 0.5 / e;
+		charact_1 = charact_1 + 0.5 * mixed_lipshEvaluation * (new_apex_1 * new_apex_1 - e * e);
+
+		double charact_2 = -F_evaluations[id_A] * (new_apex_2 - e) * 0.5 / e;
+		charact_2 = charact_2 + F_evaluations[id_B] * (new_apex_2 + e) * 0.5 / e;
+		charact_2 = charact_2 + 0.5 * mixed_lipshEvaluation * (new_apex_2 * new_apex_2 - e * e);
+
+		charact = std::min(charact_1, charact_2);
 	}
 
 	hyp.set_characteristic(charact);
@@ -165,8 +212,15 @@ void TSimplePMwithoutSM::launch_method() {
 	std::ofstream out;
 	out.open("D:\\materials\\projects\\visual_hyperinterval\\minimums.txt");
 	if (out.is_open()) {
-		for (F_iter = 0;
-			(F_iter < 200) && (std::abs(F_current_minimum - F_intervals[id_current_interval].get_characteristic()) >= eps);
+		id_current_interval = do_step(id_current_interval);
+		THyperinterval& hyp = F_intervals[id_current_interval];
+
+		if (std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]) < F_current_minimum)
+			F_current_minimum = std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]);
+		out << F_current_minimum << std::endl;
+
+		for (F_iter = 1;
+			(F_iter < 500) && (F_intervals[id_current_interval].get_diagonal() > eps);
 			++F_iter) {
 			id_current_interval = do_step(id_current_interval);
 			THyperinterval& hyp = F_intervals[id_current_interval];
