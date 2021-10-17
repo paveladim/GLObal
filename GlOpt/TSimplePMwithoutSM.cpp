@@ -17,7 +17,8 @@ TSimplePMwithoutSM::TSimplePMwithoutSM(const uint& out_dim,
 	delta(0.0000000001),
 	eps(_eps),
 	nu(_nu),
-	F_iter(0) {
+	F_iter(0),
+	do_AllCharAreInfty(false) {
 	F_criticalSize =
 		beta * sqrt(F_dimension * (CoordinateValue)MAX_POWER_THREE * (CoordinateValue)MAX_POWER_THREE);
 	does_LipshConstValue_change = false;
@@ -49,91 +50,198 @@ void TSimplePMwithoutSM::initialization() {
 	F_intervals[0].set_idThis(get_new_interval());
 	F_intervals[0].init_queues();
 	compute_diagonal(F_intervals[0].get_idThis());
-	//compute_localLipshConst(F_intervals[0].get_idThis());
-
-	//for (uint i = 0; i < F_constraints + 1; ++i)
-		//if (F_globalLipshEvaluations[i] < F_intervals[0].get_maxLipshEvaluations()[i]) {
-			//F_globalLipshEvaluations[i] = F_intervals[0].get_maxLipshEvaluations()[i];
-		//}
-
-	compute_characteristic(F_intervals[0].get_idThis());
 }
 
 void TSimplePMwithoutSM::compute_characteristic(const uint& id_Hyp) {
 	THyperinterval& hyp = F_intervals[id_Hyp];
-	double mixed_lipshEvaluation = 0;
+	static std::vector<LipschitzConstantValue> mixed_lipshEvaluations(F_constraints + 1);
 	double charact = 0.0;
 
 	if (hyp.get_diagonal() < F_criticalSize) {
 		double ratio = hyp.get_diagonal() / F_criticalSize;
-		mixed_lipshEvaluation = F_gainObjective * F_globalLipshEvaluations[0];
-		mixed_lipshEvaluation += (1 - ratio) * hyp.get_maxLipshEvaluations()[0];
+		mixed_lipshEvaluations[0] = F_gainObjective * F_globalLipshEvaluations[0];
+		mixed_lipshEvaluations[0] += (1 - ratio) * hyp.get_maxLipshEvaluations()[0];
+		for (uint i = 1; i < F_constraints + 1; ++i) {
+			mixed_lipshEvaluations[i] = F_gainConstraints * F_globalLipshEvaluations[i];
+			mixed_lipshEvaluations[i] += (1 - ratio) * hyp.get_maxLipshEvaluations()[i];
+		}
 	}
 	else {
-		mixed_lipshEvaluation = F_globalLipshEvaluations[0];
+		for (uint i = 0; i < F_constraints + 1; ++i)
+			mixed_lipshEvaluations[i] = F_globalLipshEvaluations[i];
 	}
 
 	double e = 0.0;
 	uint id_A = F_intervals[id_Hyp].get_idA();
 	uint id_B = F_intervals[id_Hyp].get_idB();
+
 	for (uint i = 0; i < F_dimension; ++i) {
 		double diff = double(F_coords[id_B + i]) - double(F_coords[id_A + i]);
 		e += (diff * diff);
 	}
 
 	e = sqrt(e) * 0.5;
+
+	double left_border_MPOS = -e;
+	double right_border_MPOS = e;
+	double left_border_MNEG = e;
+	double right_border_MNEG = -e;
+	bool does_empty = false;
+
 	id_A = F_intervals[id_Hyp].get_idEvaluationsA();
 	id_B = F_intervals[id_Hyp].get_idEvaluationsB();
 
-	if (mixed_lipshEvaluation > 0) {
-		double apex = F_evaluations[id_A] - F_evaluations[id_B];
-		apex = 0.5 * apex / (mixed_lipshEvaluation * e);
+	static double a = 0.0;
+	static double b = 0.0;
+	static double c = 0.0;
+	for (uint i = 1; (i < F_constraints + 1) && (!does_empty); ++i) {
+		a = 0.5 * mixed_lipshEvaluations[i];
+		b = 0.5 * (F_evaluations[id_B + i] - F_evaluations[id_A + i]) / e;
+		c = 0.5 * (F_evaluations[id_A + i] + F_evaluations[id_B + i]);
+		c = c - mixed_lipshEvaluations[i] * e * e * 0.5;
 
-		double new_apex = apex;
-		if (apex <= -e) new_apex = -e + nu * 2 * e;
-		else if (apex >= e) new_apex = e - nu * 2 * e;
-		else if (e + apex - nu < std::numeric_limits<double>::epsilon())
-			new_apex = -e + nu * 2 * e;
-		else if (e - apex - nu < std::numeric_limits<double>::epsilon())
-			new_apex = e - nu * 2 * e;
+		if ((b * b - 4 * a * c) < 0) {
+			if (mixed_lipshEvaluations[i] > 0) does_empty = true;
+		}
+		else {
+			double left_border_tmp = -0.5 * b / a -
+				sqrt(0.25 * b * b / a / a - a * c);
+			double right_border_tmp = -0.5 * b / a +
+				sqrt(0.25 * b * b / a / a - a * c);
+			if (right_border_tmp < left_border_tmp)
+				std::swap(right_border_tmp, left_border_tmp);
 
-		charact = -F_evaluations[id_A] * (new_apex - e) * 0.5 / e;
-		charact = charact + F_evaluations[id_B] * (new_apex + e) * 0.5 / e;
-		charact = charact + 0.5 * mixed_lipshEvaluation * (new_apex * new_apex - e * e);
+			if (mixed_lipshEvaluations[i] > 0) {
+				if ((left_border_tmp >= left_border_MPOS) &&
+					(left_border_tmp <= right_border_MPOS))
+					left_border_MPOS = left_border_tmp;
+				else if (left_border_tmp > right_border_MPOS)
+					does_empty = true;
+
+				if ((right_border_tmp >= left_border_MPOS) &&
+					(right_border_tmp <= right_border_MPOS))
+					right_border_MPOS = right_border_tmp;
+				else if (right_border_tmp < left_border_MPOS)
+					does_empty = true;
+			}
+			else {
+				if ((left_border_tmp >= -e) &&
+					left_border_tmp <= left_border_MNEG)
+					left_border_MNEG = left_border_tmp;
+				else if (left_border_tmp < -e) left_border_MNEG = -e;
+
+				if ((right_border_tmp <= e) &&
+					(right_border_tmp >= right_border_MNEG))
+					right_border_MNEG = right_border_tmp;
+				else if (right_border_tmp > e) right_border_MNEG = e;
+
+				if ((left_border_MNEG == 0) && (right_border_MPOS))
+					does_empty = true;
+			}
+		}
 	}
+
+	if ((left_border_MNEG < left_border_MPOS) && (right_border_MPOS < right_border_MNEG))
+		does_empty = true;
+
+	if (does_empty)
+		hyp.set_characteristic(std::numeric_limits<double>::max());
 	else {
-		double new_apex_1 = -e + nu * 2 * e;
-		double new_apex_2 = e - nu * 2 * e;
+		if (mixed_lipshEvaluations[0] > 0) {
+			double apex = F_evaluations[id_A] - F_evaluations[id_B];
+			apex = 0.5 * apex / (mixed_lipshEvaluations[0] * e);
 
-		double charact_1 = -F_evaluations[id_A] * (new_apex_1 - e) * 0.5 / e;
-		charact_1 = charact_1 + F_evaluations[id_B] * (new_apex_1 + e) * 0.5 / e;
-		charact_1 = charact_1 + 0.5 * mixed_lipshEvaluation * (new_apex_1 * new_apex_1 - e * e);
+			if ((left_border_MNEG == e) &&
+				(left_border_MPOS == -e) &&
+				(right_border_MNEG == -e) &&
+				(right_border_MPOS == e)) {
 
-		double charact_2 = -F_evaluations[id_A] * (new_apex_2 - e) * 0.5 / e;
-		charact_2 = charact_2 + F_evaluations[id_B] * (new_apex_2 + e) * 0.5 / e;
-		charact_2 = charact_2 + 0.5 * mixed_lipshEvaluation * (new_apex_2 * new_apex_2 - e * e);
+				charact = -F_evaluations[id_A] * (apex - e) * 0.5 / e;
+				charact = charact + F_evaluations[id_B] * (apex + e) * 0.5 / e;
+				charact = charact + 0.5 * mixed_lipshEvaluations[0] * (apex * apex - e * e);
+			}
+			else if ((apex >= left_border_MPOS) && (apex <= left_border_MNEG) ||
+					 (apex >= right_border_MNEG) && (apex <= right_border_MPOS))
+				apex = apex;
+			else
+				apex = std::min({ 
+					left_border_MPOS + nu * (left_border_MNEG - left_border_MPOS),
+					left_border_MNEG - nu * (left_border_MNEG - left_border_MPOS),
+					right_border_MNEG + nu * (right_border_MPOS - right_border_MNEG),
+					right_border_MPOS - nu * (right_border_MPOS - right_border_MNEG) 
+					});
 
-		charact = std::min(charact_1, charact_2);
+			charact = -F_evaluations[id_A] * (apex - e) * 0.5 / e;
+			charact = charact + F_evaluations[id_B] * (apex + e) * 0.5 / e;
+			charact = charact + 0.5 * mixed_lipshEvaluations[0] * (apex * apex - e * e);
+		}
+		else {
+			double apex = 0.0;
+			if ((left_border_MNEG == e) &&
+				(left_border_MPOS == -e) &&
+				(right_border_MNEG == -e) &&
+				(right_border_MPOS == e)) {
+				apex = 
+					std::min({
+					left_border_MPOS + nu * (left_border_MNEG - left_border_MPOS),
+					right_border_MPOS - nu * (right_border_MPOS - right_border_MNEG)
+					});
+			} 
+			else apex = 
+					std::min({
+					left_border_MPOS + nu * (left_border_MNEG - left_border_MPOS),
+					left_border_MNEG - nu * (left_border_MNEG - left_border_MPOS),
+					right_border_MNEG + nu * (right_border_MPOS - right_border_MNEG),
+					right_border_MPOS - nu * (right_border_MPOS - right_border_MNEG)
+					});
+
+			charact = -F_evaluations[id_A] * (apex - e) * 0.5 / e;
+			charact = charact + F_evaluations[id_B] * (apex + e) * 0.5 / e;
+			charact = charact + 0.5 * mixed_lipshEvaluations[0] * (apex * apex - e * e);
+		}
+		hyp.set_characteristic(charact);
 	}
-
-	hyp.set_characteristic(charact);
 }
 
 uint TSimplePMwithoutSM::choose_optimal_to_trisect() {
 	uint id_optimal_hyp = 0;
-	double optimal_charact = F_intervals[id_optimal_hyp].get_characteristic();
-	double current_charact = 0.0;
 
-	for (uint id_hyp = 1; id_hyp < F_generated_intervals; ++id_hyp) {
-		current_charact = F_intervals[id_hyp].get_characteristic();
-		if (std::abs(current_charact - optimal_charact) < std::numeric_limits<double>::epsilon());
-		else if (optimal_charact > current_charact) {
-			optimal_charact = current_charact;
-			id_optimal_hyp = id_hyp;
+	check_ifAllCharAreInfty();
+	if (!do_AllCharAreInfty) {
+		double optimal_charact = F_intervals[id_optimal_hyp].get_characteristic();
+		double current_charact = 0.0;
+
+		for (uint id_hyp = 1; id_hyp < F_generated_intervals; ++id_hyp) {
+			current_charact = F_intervals[id_hyp].get_characteristic();
+			if (std::abs(current_charact - optimal_charact) < std::numeric_limits<double>::epsilon());
+			else if (optimal_charact > current_charact) {
+				optimal_charact = current_charact;
+				id_optimal_hyp = id_hyp;
+			}
+		}
+	}
+	else {
+		double optimal_charact = F_intervals[id_optimal_hyp].get_diagonal();
+		double current_charact = 0.0;
+
+		for (uint id_hyp = 1; id_hyp < F_generated_intervals; ++id_hyp) {
+			current_charact = F_intervals[id_hyp].get_diagonal();
+			if (std::abs(current_charact - optimal_charact) < std::numeric_limits<double>::epsilon());
+			else if (optimal_charact < current_charact) {
+				optimal_charact = current_charact;
+				id_optimal_hyp = id_hyp;
+			}
 		}
 	}
 
 	return id_optimal_hyp;
+}
+
+void TSimplePMwithoutSM::check_ifAllCharAreInfty() {
+	do_AllCharAreInfty = true;
+	for (uint i = 0; i < F_generated_intervals; ++i)
+		if (F_intervals[i].get_characteristic() < std::numeric_limits<double>::max())
+			do_AllCharAreInfty = false;
 }
 
 void TSimplePMwithoutSM::compute_localLipshConst(const uint& id_Hyp1, 
@@ -190,6 +298,11 @@ void TSimplePMwithoutSM::update_globalLipshEval(const uint& id_Hyp) {
 		update_all_characteristics();
 		does_LipshConstValue_change = false;
 	}
+	else {
+		compute_characteristic(id_Hyp);
+		compute_characteristic(F_generated_intervals - 2);
+		compute_characteristic(F_generated_intervals - 1);
+	}
 }
 
 void TSimplePMwithoutSM::update_all_characteristics() {
@@ -210,17 +323,10 @@ void TSimplePMwithoutSM::launch_method() {
 	initialization();
 	uint id_current_interval = 0;
 	std::ofstream out;
-	out.open("D:\\materials\\projects\\visual_hyperinterval\\minimums.txt");
+	out.open("C:\\Users\\pavel\\Documents\\projects\\visualize_hyperinterval\\minimums.txt");
 	if (out.is_open()) {
-		id_current_interval = do_step(id_current_interval);
-		THyperinterval& hyp = F_intervals[id_current_interval];
-
-		if (std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]) < F_current_minimum)
-			F_current_minimum = std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]);
-		out << F_current_minimum << std::endl;
-
-		for (F_iter = 1;
-			(F_iter < 500) && (F_intervals[id_current_interval].get_diagonal() > eps);
+		for (F_iter = 0;
+			(F_iter < 300) && (F_intervals[id_current_interval].get_diagonal() > eps * F_intervals[0].get_diagonal());
 			++F_iter) {
 			id_current_interval = do_step(id_current_interval);
 			THyperinterval& hyp = F_intervals[id_current_interval];
@@ -236,7 +342,7 @@ void TSimplePMwithoutSM::launch_method() {
 
 void TSimplePMwithoutSM::write_generated_points_to_file() {
 	std::ofstream out;
-	out.open("D:\\materials\\projects\\visual_hyperinterval\\points.txt");
+	out.open("C:\\Users\\pavel\\Documents\\projects\\visualize_hyperinterval\\points.txt");
 	if (out.is_open())
 	{
 		for (uint i = 0; i < F_generated_points * F_dimension; ++i)
@@ -246,7 +352,7 @@ void TSimplePMwithoutSM::write_generated_points_to_file() {
 
 void TSimplePMwithoutSM::write_intervals_to_file() {
 	std::ofstream out;
-	out.open("D:\\materials\\projects\\visual_hyperinterval\\hyp.txt");
+	out.open("C:\\Users\\pavel\\Documents\\projects\\visualize_hyperinterval\\hyp.txt");
 	if (out.is_open())
 	{
 		for (uint id_hyp = 0; id_hyp < F_generated_intervals; ++id_hyp) {

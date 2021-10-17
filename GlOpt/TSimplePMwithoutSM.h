@@ -9,7 +9,8 @@ class TSimplePMwithoutSM : protected TMethodDivByThree {
 	GainLipshConstant F_gainConstraints; // константа завышения констант Липшица для ограничений
 	double delta; // параметр для осторожных локальных оценок
 	double nu; // для отступов от границ
-	bool does_LipshConstValue_change; // изменилась ли какая-то из глобальных оценок констант Липшица
+	bool does_LipshConstValue_change; // изменилась ли какая-то из глобальных оценок констант Липшица?
+	bool do_AllCharAreInfty; // все ли характеристики бесконечно большие?
 	double eps; // для остановки по точности
 	uint F_iter;
 public:
@@ -27,6 +28,7 @@ public:
 	virtual void initialization(); // инициализация гиперинтервала
 	virtual void compute_characteristic(const uint& id_Hyp); // вычислить характеристику
 	virtual uint choose_optimal_to_trisect(); // найти оптимальный для деления на три
+	void check_ifAllCharAreInfty(); // проверить у всех ли гиперинтервалов характеристика бесконечно большая
 	// вычислить локальную оценку констант в гиперинтервале
 	void compute_localLipshConst(const uint& id_Hyp1, const uint& id_Hyp2, const uint& id_Hyp3);
 	void update_globalLipshEval(const uint& id_Hyp); // обновить глобальные оценки констант
