@@ -7,6 +7,7 @@
 #include <list>
 #include <functional>
 #include <cmath>
+#include <iomanip>
 
 using uint = unsigned int;
 using EncodedCoordinate = uint;

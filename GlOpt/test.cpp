@@ -12,7 +12,8 @@
 FunctionsValues& f(FunctionsValues& res, const CoordinatesValues& x)
 {
 	res[0] = (x[0] - 0.7) * (x[0] - 0.7) + (x[1] - 0.2) * (x[1] - 0.2);
-	res[1] = (x[0] - 0.1) * (x[0] - 0.1) + (x[1] - 0.8) * (x[1] - 0.8);
+	// res[1] = -(x[0] - 0.1) * (x[0] - 0.1) - (x[1] - 0.8) * (x[1] - 0.8);
+	res[1] = -1;
 	return res;
 }
 
@@ -29,9 +30,9 @@ int main() {
 	uint dim{ 2 };
 	uint cst{ 1 };
 	uint dep{ 3 };
-	TProblem testProblem1(dim, cst, { 0, 0 }, { 1, 1 }, &g);
-	GainLipshConstant obj_const{ 1 };
-	GainLipshConstant cst_const{ 1 };
+	TProblem testProblem1(dim, cst, { 0.0, 0.0 }, { 1.0, 1.0 }, &f);
+	GainLipshConstant obj_const{ 2.0 };
+	GainLipshConstant cst_const{ 3.0 };
 	double beta = 1e-8;
 	double eps = 1e-3;
 	double nu = 1e-8;

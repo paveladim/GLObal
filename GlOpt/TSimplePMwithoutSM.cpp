@@ -2,6 +2,11 @@
 #include <fstream>
 #include "TSimplePMwithoutSM.h"
 
+EncodedCoordinates TSimplePMwithoutSM::F_decodeA;
+EncodedCoordinates TSimplePMwithoutSM::F_decodeB;
+CoordinatesValues TSimplePMwithoutSM::F_decodedA;
+CoordinatesValues TSimplePMwithoutSM::F_decodedB;
+
 TSimplePMwithoutSM::TSimplePMwithoutSM(const uint& out_dim,
 									   const uint& out_constr,
 									   const uint& depth,
@@ -22,6 +27,11 @@ TSimplePMwithoutSM::TSimplePMwithoutSM(const uint& out_dim,
 	F_criticalSize =
 		beta * sqrt(F_dimension * (CoordinateValue)MAX_POWER_THREE * (CoordinateValue)MAX_POWER_THREE);
 	does_LipshConstValue_change = false;
+
+	F_decodeA.resize(F_dimension);
+	F_decodeB.resize(F_dimension);
+	F_decodedA.resize(F_dimension);
+	F_decodedB.resize(F_dimension);
 }
 
 void TSimplePMwithoutSM::initialization() {
@@ -76,9 +86,18 @@ void TSimplePMwithoutSM::compute_characteristic(const uint& id_Hyp) {
 	uint id_B = F_intervals[id_Hyp].get_idB();
 
 	for (uint i = 0; i < F_dimension; ++i) {
-		double diff = double(F_coords[id_B + i]) - double(F_coords[id_A + i]);
-		e += (diff * diff);
+		F_decodeA[i] = F_coords[id_A + i];
+		F_decodeB[i] = F_coords[id_B + i];
 	}
+
+	F_decodedA = Fp.decode_coordinates(F_decodeA);
+	F_decodedB = Fp.decode_coordinates(F_decodeB);
+
+	for (uint i = 0; i < F_dimension; ++i)
+		e += (((double)F_decodeB[i] - (double)F_decodeA[i]) * ((double)F_decodeB[i] - (double)F_decodeA[i]));
+
+	/*for (uint i = 0; i < F_dimension; ++i)
+		e += ((F_decodedB[i] - F_decodedA[i]) * (F_decodedB[i] - F_decodedA[i]));*/
 
 	e = sqrt(e) * 0.5;
 
@@ -234,6 +253,33 @@ uint TSimplePMwithoutSM::choose_optimal_to_trisect() {
 		}
 	}
 
+	THyperinterval& hyp = F_intervals[id_optimal_hyp];
+
+	EncodedCoordinates a(F_dimension);
+	EncodedCoordinates b(F_dimension);
+
+	for (uint i = 0; i < F_dimension; ++i) {
+		a[i] = F_coords[hyp.get_idA() + i];
+		b[i] = F_coords[hyp.get_idB() + i];
+	}
+
+	CoordinatesValues dec_a = Fp.decode_coordinates(a);
+	CoordinatesValues dec_b = Fp.decode_coordinates(b);
+
+	std::cout << "(" << std::setprecision(4)
+					 << 0.5 * (dec_a[0] + dec_b[0]) << ';'
+					 << 0.5 * (dec_a[1] + dec_b[1]) << ')';
+
+	std::cout << " D = " << hyp.get_diagonal() / MAX_POWER_THREE;
+	std::cout << " Char: " << hyp.get_characteristic();
+
+	std::vector<double> evals = hyp.get_maxLipshEvaluations();
+	std::cout << " O: " << evals[0]
+			  << " C: " << evals[1];
+
+	std::cout << " (" << F_evaluations[hyp.get_idEvaluationsA()] << ';'
+					  << F_evaluations[hyp.get_idEvaluationsB()] << ')' << std::endl;
+
 	return id_optimal_hyp;
 }
 
@@ -261,10 +307,39 @@ void TSimplePMwithoutSM::compute_localLipshConst(const uint& id_Hyp1,
 	double e1 = sqrt(0.25 * h1 * h1 + h2 * h2 / 36.0);
 	double e2 = 0.5 * sqrt(h1 * h1 + h2 * h2);
 
+	/*double e1 = 0.0;
+	double e2 = 0.0;
+
+	for (uint i = 0; i < F_dimension; ++i) {
+		F_decodeA[i] = F_coords[hyp2.get_idA() + i];
+		F_decodeB[i] = F_coords[hyp2.get_idB() + i];
+	}
+
+	F_decodedA = Fp.decode_coordinates(F_decodeA);
+	F_decodedB = Fp.decode_coordinates(F_decodeB);
+
+	for (uint i = 0; i < F_dimension; ++i)
+		e1 += ((F_decodedB[i] - F_decodedA[i]) * (F_decodedB[i] - F_decodedA[i]));
+
+	e1 = sqrt(e1);
+
+	for (uint i = 0; i < F_dimension; ++i) {
+		F_decodeA[i] = F_coords[hyp1.get_idA() + i];
+		F_decodeB[i] = F_coords[hyp3.get_idB() + i];
+	}
+
+	F_decodedA = Fp.decode_coordinates(F_decodeA);
+	F_decodedB = Fp.decode_coordinates(F_decodeB);
+
+	for (uint i = 0; i < F_dimension; ++i)
+		e2 += ((F_decodedB[i] - F_decodedA[i]) * (F_decodedB[i] - F_decodedA[i]));
+
+	e2 = sqrt(e2); */
+
 	for (uint i = 0; i < F_constraints + 1; ++i) {
 		new_llcv[i] = F_evaluations[hyp1.get_idEvaluationsA() + i] + F_evaluations[hyp3.get_idEvaluationsB() + i];
 		new_llcv[i] -= F_evaluations[hyp2.get_idEvaluationsA() + i] + F_evaluations[hyp2.get_idEvaluationsB() + i];
-		new_llcv[i] = new_llcv[i] / (e2 * e2 - e1 * e1);
+		new_llcv[i] = 0.5 * std::abs(new_llcv[i] / (e2 * e2 - e1 * e1));
 	}
 
 	hyp1.update_queuesLipshEvaluations(new_llcv, delta);
@@ -323,7 +398,7 @@ void TSimplePMwithoutSM::launch_method() {
 	initialization();
 	uint id_current_interval = 0;
 	std::ofstream out;
-	out.open("C:\\Users\\pavel\\Documents\\projects\\visualize_hyperinterval\\minimums.txt");
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\minimums.txt");
 	if (out.is_open()) {
 		for (F_iter = 0;
 			(F_iter < 300) && (F_intervals[id_current_interval].get_diagonal() > eps * F_intervals[0].get_diagonal());
@@ -342,7 +417,7 @@ void TSimplePMwithoutSM::launch_method() {
 
 void TSimplePMwithoutSM::write_generated_points_to_file() {
 	std::ofstream out;
-	out.open("C:\\Users\\pavel\\Documents\\projects\\visualize_hyperinterval\\points.txt");
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\points.txt");
 	if (out.is_open())
 	{
 		for (uint i = 0; i < F_generated_points * F_dimension; ++i)
@@ -352,7 +427,7 @@ void TSimplePMwithoutSM::write_generated_points_to_file() {
 
 void TSimplePMwithoutSM::write_intervals_to_file() {
 	std::ofstream out;
-	out.open("C:\\Users\\pavel\\Documents\\projects\\visualize_hyperinterval\\hyp.txt");
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\hyp.txt");
 	if (out.is_open())
 	{
 		for (uint id_hyp = 0; id_hyp < F_generated_intervals; ++id_hyp) {

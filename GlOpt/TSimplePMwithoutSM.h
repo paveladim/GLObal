@@ -13,6 +13,11 @@ class TSimplePMwithoutSM : protected TMethodDivByThree {
 	bool do_AllCharAreInfty; // все ли характеристики бесконечно большие?
 	double eps; // для остановки по точности
 	uint F_iter;
+
+	static EncodedCoordinates F_decodeA;
+	static EncodedCoordinates F_decodeB;
+	static CoordinatesValues F_decodedA;
+	static CoordinatesValues F_decodedB;
 public:
 	TSimplePMwithoutSM() = delete;
 	TSimplePMwithoutSM(const uint& out_dim,
