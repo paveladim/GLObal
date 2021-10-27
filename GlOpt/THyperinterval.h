@@ -36,6 +36,7 @@ public:
 	THyperinterval& operator=(const THyperinterval& out_interval) = default;
 
 	void increase_division() { ++F_divisions; } // увеличить число делений
+	uint get_divisions() { return F_divisions; } // получить число делений
 	uint get_idThis() const { return F_idThis; } // получить итендификатор гиперинтервала
 	uint get_idPointA() const { return F_idPointA; } // получить итендификатор точки активной диагонали
 	uint get_idPointB() const { return F_idPointB; } // получить итендификатор точки активной диагонали

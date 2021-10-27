@@ -5,7 +5,7 @@
 #include <vector>
 #include "TMethodDivByThree.h"
 #include "TPiyavskiiMethod.h"
-#include "TSimplePMwithoutSM.h"
+#include "TSimplePMnoConstraints.h"
 #include "Matrix.h"
 #include "SimplexMethod.h"
 
@@ -35,11 +35,10 @@ int main() {
 	GainLipshConstant cst_const{ 3.0 };
 	double beta = 1e-8;
 	double eps = 1e-3;
-	double nu = 1e-8;
 
 	//TMethodDivByThree testMethod(dim, cst, dep, testProblem1);
 	//TPiyavskiiMethod testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps);
-	TSimplePMwithoutSM testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps, nu);
+	TSimplePMnoConstraints testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps);
 	testMethod.launch_method();
 	testMethod.write_generated_points_to_file();
 	testMethod.write_intervals_to_file();

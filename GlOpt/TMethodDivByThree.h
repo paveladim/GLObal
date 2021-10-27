@@ -29,7 +29,7 @@ protected:
     uint F_generated_intervals; // число уже сгенерированных методом гиперинтервалов
 
     double F_current_minimum; // текущее минимальное значение целевой функции
-    uint F_id_current_minimum; // итендификатор глобального минимума
+    uint F_id_current_minimum; // идентификатор глобального минимума
 
     TProblem& Fp; // вычислитель целевой функции и функций-ограничений
     std::vector<LipschitzConstantValue> F_globalLipshEvaluations; // вектор глобальных оценок констант Липшица целевой функции и ограничений
