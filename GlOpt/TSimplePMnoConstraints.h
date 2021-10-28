@@ -1,42 +1,42 @@
-#ifndef TSIMPLEPM_NOCONSTRAINTS_H
+п»ї#ifndef TSIMPLEPM_NOCONSTRAINTS_H
 #define TSIMPLEPM_NOCONSTRAINTS_H
 
 #include "TMethodDivByThree.h"
 
 class TSimplePMnoConstraints : public TMethodDivByThree {
-	// пороговый размер гиперинтервала
+	// РїРѕСЂРѕРіРѕРІС‹Р№ СЂР°Р·РјРµСЂ РіРёРїРµСЂРёРЅС‚РµСЂРІР°Р»Р°
 	double F_criticalSize;
-	// константа завышения константы Липшица для целевой функции
+	// РєРѕРЅСЃС‚Р°РЅС‚Р° Р·Р°РІС‹С€РµРЅРёСЏ РєРѕРЅСЃС‚Р°РЅС‚С‹ Р›РёРїС€РёС†Р° РґР»СЏ С†РµР»РµРІРѕР№ С„СѓРЅРєС†РёРё
 	GainLipshConstant F_gainObjective;
-	// константа завышения констант Липшица для ограничений
+	// РєРѕРЅСЃС‚Р°РЅС‚Р° Р·Р°РІС‹С€РµРЅРёСЏ РєРѕРЅСЃС‚Р°РЅС‚ Р›РёРїС€РёС†Р° РґР»СЏ РѕРіСЂР°РЅРёС‡РµРЅРёР№
 	GainLipshConstant F_gainConstraints;
-	// параметр для осторожных локальных оценок
+	// РїР°СЂР°РјРµС‚СЂ РґР»СЏ РѕСЃС‚РѕСЂРѕР¶РЅС‹С… Р»РѕРєР°Р»СЊРЅС‹С… РѕС†РµРЅРѕРє
 	double delta;
-	// изменилась ли какая-то из глобальных оценок констант Липшица?
+	// РёР·РјРµРЅРёР»Р°СЃСЊ Р»Рё РєР°РєР°СЏ-С‚Рѕ РёР· РіР»РѕР±Р°Р»СЊРЅС‹С… РѕС†РµРЅРѕРє РєРѕРЅСЃС‚Р°РЅС‚ Р›РёРїС€РёС†Р°?
 	bool does_LipshConstValue_change;
-	// для остановки по точности
+	// РґР»СЏ РѕСЃС‚Р°РЅРѕРІРєРё РїРѕ С‚РѕС‡РЅРѕСЃС‚Рё
 	double eps;
 private:
 	void compute_characteristic(const uint& id_Hyp) override;
 	double get_mixedLipshitzEval(const THyperinterval& hyp);
 	void compute_localLipshConst(const uint& id_Hyp);
 	void update_globalLipshEval(const uint& id_Hyp);
-	// обновить характеристики всех гиперинтервалов
+	// РѕР±РЅРѕРІРёС‚СЊ С…Р°СЂР°РєС‚РµСЂРёСЃС‚РёРєРё РІСЃРµС… РіРёРїРµСЂРёРЅС‚РµСЂРІР°Р»РѕРІ
 	void update_all_characteristics();
-	// найти оптимальный для деления на три
+	// РЅР°Р№С‚Рё РѕРїС‚РёРјР°Р»СЊРЅС‹Р№ РґР»СЏ РґРµР»РµРЅРёСЏ РЅР° С‚СЂРё
 	uint choose_optimal_to_trisect() override;
 	uint do_step(const uint& id_divHyp) override;
 public:
 	TSimplePMnoConstraints() = delete;
 	TSimplePMnoConstraints(const uint& out_dim,
-						   const uint& out_constr,
-						   const uint& depth,
-						   TProblem& out_prob,
-						   const GainLipshConstant& out_gainObj,
-					       const GainLipshConstant& out_gainCst,
-						   const double& beta,
-						   const double& _eps
-						   );
+		const uint& out_constr,
+		const uint& depth,
+		TProblem& out_prob,
+		const GainLipshConstant& out_gainObj,
+		const GainLipshConstant& out_gainCst,
+		const double& beta,
+		const double& _eps
+	);
 	void launch_method() override;
 };
 

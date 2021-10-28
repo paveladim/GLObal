@@ -6,6 +6,7 @@
 #include "TMethodDivByThree.h"
 #include "TPiyavskiiMethod.h"
 #include "TSimplePMnoConstraints.h"
+#include "TSimplePMwithConstraints.h"
 #include "Matrix.h"
 #include "SimplexMethod.h"
 
@@ -13,7 +14,7 @@ FunctionsValues& f(FunctionsValues& res, const CoordinatesValues& x)
 {
 	res[0] = (x[0] - 0.7) * (x[0] - 0.7) + (x[1] - 0.2) * (x[1] - 0.2);
 	// res[1] = -(x[0] - 0.1) * (x[0] - 0.1) - (x[1] - 0.8) * (x[1] - 0.8);
-	res[1] = -1;
+	res[1] = 1;
 	return res;
 }
 
@@ -31,14 +32,14 @@ int main() {
 	uint cst{ 1 };
 	uint dep{ 3 };
 	TProblem testProblem1(dim, cst, { 0.0, 0.0 }, { 1.0, 1.0 }, &f);
-	GainLipshConstant obj_const{ 2.0 };
-	GainLipshConstant cst_const{ 3.0 };
+	GainLipshConstant obj_const{ 4.0 };
+	GainLipshConstant cst_const{ 6.0 };
 	double beta = 1e-8;
 	double eps = 1e-3;
 
 	//TMethodDivByThree testMethod(dim, cst, dep, testProblem1);
 	//TPiyavskiiMethod testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps);
-	TSimplePMnoConstraints testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps);
+	TSimplePMwithConstraints testMethod(dim, cst, dep, testProblem1, obj_const, cst_const, beta, eps);
 	testMethod.launch_method();
 	testMethod.write_generated_points_to_file();
 	testMethod.write_intervals_to_file();
