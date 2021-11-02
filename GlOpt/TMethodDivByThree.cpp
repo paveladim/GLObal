@@ -130,18 +130,18 @@ void TMethodDivByThree::fill_intervals(THyperinterval& parent, const uint& id_u,
 
 	parent.set_idPointB(id_u);
 	compute_diagonal(parent.get_idThis());
-	compute_characteristic(parent.get_idThis());
+	//compute_characteristic(parent.get_idThis());
 
 	new_hyp_2.set_idThis(pos_hyp_2);
 	new_hyp_2.set_idPointA(id_u);
 	new_hyp_2.set_idPointB(id_v);
 	compute_diagonal(new_hyp_2.get_idThis());
-	compute_characteristic(new_hyp_2.get_idThis());
+	//compute_characteristic(new_hyp_2.get_idThis());
 
 	new_hyp_3.set_idThis(pos_hyp_3);
 	new_hyp_3.set_idPointA(id_v);
 	compute_diagonal(new_hyp_3.get_idThis());
-	compute_characteristic(new_hyp_3.get_idThis());
+	//compute_characteristic(new_hyp_3.get_idThis());
 }
 
 void TMethodDivByThree::compute_diagonal(const uint& id_Hyp) {
@@ -179,6 +179,11 @@ void TMethodDivByThree::compute_evaluations(const uint& out_idPoint) {
 		transit_coord_2[i] = F_coords[pos + i];
 
 	FunctionsValues& evals = Fp(transit_coord_2);
+
+	if (evals[0] < F_current_minimum) {
+		F_current_minimum = evals[0];
+		F_id_current_minimum = point.get_id_evaluations();
+	}
 
 	for (uint i = 0; i < F_constraints + 1; ++i)
 		F_evaluations[point.F_idThis * (F_constraints + 1) + i] = evals[i];

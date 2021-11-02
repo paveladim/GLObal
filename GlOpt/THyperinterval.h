@@ -19,6 +19,9 @@ class THyperinterval
 	std::vector<std::queue<LipschitzConstantValue>> F_localsLipshEvaluations; // очередь локальных оценок констант 
 	std::vector<LipschitzConstantValue> F_maxLocalLipshEvaluations; // максимальные значения оценок констант
 
+	//
+	bool does_changeGloMin;
+
 	// статические поля
 	static uint F_dimension; // размерность задачи
 	static uint F_constraints; // количество ограничений задачи
@@ -37,6 +40,9 @@ public:
 
 	void increase_division() { ++F_divisions; } // увеличить число делений
 	uint get_divisions() { return F_divisions; } // получить число делений
+	void set_globmintrue() { does_changeGloMin = true; }
+	void set_globminfalse() { does_changeGloMin = false; }
+	bool get_glominchange() { return does_changeGloMin; }
 	uint get_idThis() const { return F_idThis; } // получить итендификатор гиперинтервала
 	uint get_idPointA() const { return F_idPointA; } // получить итендификатор точки активной диагонали
 	uint get_idPointB() const { return F_idPointB; } // получить итендификатор точки активной диагонали

@@ -164,7 +164,7 @@ TSimplePMnoConstraints::choose_optimal_to_trisect() {
 		}
 	}
 
-	THyperinterval& hyp = F_intervals[id_optimal_hyp];
+	/*THyperinterval& hyp = F_intervals[id_optimal_hyp];
 
 	EncodedCoordinates a(F_dimension);
 	EncodedCoordinates b(F_dimension);
@@ -189,7 +189,7 @@ TSimplePMnoConstraints::choose_optimal_to_trisect() {
 			  << " C: " << evals[1] * (double)MAX_POWER_THREE * (double)MAX_POWER_THREE;
 
 	std::cout << " (" << F_evaluations[hyp.get_idEvaluationsA()] << ';'
-					  << F_evaluations[hyp.get_idEvaluationsB()] << ')' << std::endl;
+					  << F_evaluations[hyp.get_idEvaluationsB()] << ')' << std::endl; */
 
 	return id_optimal_hyp;
 }

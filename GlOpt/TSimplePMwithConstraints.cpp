@@ -26,7 +26,7 @@ TSimplePMwithConstraints::TSimplePMwithConstraints(const uint& out_dim,
 void 
 TSimplePMwithConstraints::give_borders(double& l, 
 									   double& r, 
-									   const THyperinterval& hyp) {
+									   THyperinterval& hyp) {
 	double a = 0.0;
 	double b = 0.0;
 	double c = 0.0;
@@ -45,12 +45,12 @@ TSimplePMwithConstraints::give_borders(double& l,
 		c = 0.5 * (fb + fa - M * e * e);
 
 		if (b * b - 4 * a * c >= 0) {
-			fa = -0.5 * b / a + sqrt(b * b - 4 * a * c);
-			fb = -0.5 * b / a - sqrt(b * b - 4 * a * c);
+			fa = (-b - sqrt(b * b - 4 * a * c)) * 0.5 / a;
+			fb = (-b + sqrt(b * b - 4 * a * c)) * 0.5 / a;
 
 			if (fa > fb) std::swap(fa, fb);
-			if (fa >= l) l = fa;
-			if (fb <= r) r = fb;
+			if ((fa >= l) && (fa <= r)) l = fa;
+			if ((fb <= r) && (fb >= l)) r = fb;
 		}
 		else {
 			l = e;
@@ -65,8 +65,8 @@ TSimplePMwithConstraints::get_mixedLipshitzEval(const THyperinterval& hyp,
 												const uint& i) {
 	double mixed_LipshitzEval = 0.0;
 
-	if (hyp.get_diagonal() < get_critical_size()) {
-		double ratio = hyp.get_diagonal() / get_critical_size();
+	if (hyp.get_diagonal() < F_criticalSize) {
+		double ratio = hyp.get_diagonal() / F_criticalSize;
 		mixed_LipshitzEval = ratio * F_globalLipshEvaluations[i] +
 			(1 - ratio) * hyp.get_maxLipshEvaluations()[i];
 	}
@@ -99,7 +99,7 @@ TSimplePMwithConstraints::compute_characteristic(const uint& id_Hyp) {
 		hyp.set_characteristic(std::numeric_limits<double>::max());
 	}
 	else {
-		if ((t_min > -e) && (t_min < e)) {
+		if ((t_min > left) && (t_min < right)) {
 			double charact = -F_evaluations[hyp.get_idEvaluationsA()] * (t_min - e);
 			charact = charact + F_evaluations[hyp.get_idEvaluationsB()] * (t_min + e);
 			charact = 0.5 * charact / e;
@@ -107,10 +107,17 @@ TSimplePMwithConstraints::compute_characteristic(const uint& id_Hyp) {
 			hyp.set_characteristic(charact);
 		}
 		else {
-			hyp.set_characteristic(
-				std::min(F_evaluations[hyp.get_idEvaluationsA()],
-					F_evaluations[hyp.get_idEvaluationsB()])
-			);
+			double charact1 = -F_evaluations[hyp.get_idEvaluationsA()] * (left - e);
+			charact1 = charact1 + F_evaluations[hyp.get_idEvaluationsB()] * (left + e);
+			charact1 = 0.5 * charact1 / e;
+			charact1 = charact1 + 0.5 * mixed_LipshitzEval * (left * left - e * e);
+
+			double charact2 = -F_evaluations[hyp.get_idEvaluationsA()] * (right - e);
+			charact2 = charact2 + F_evaluations[hyp.get_idEvaluationsB()] * (right + e);
+			charact2 = 0.5 * charact2 / e;
+			charact2 = charact2 + 0.5 * mixed_LipshitzEval * (right * right - e * e);
+
+			hyp.set_characteristic(std::min(charact1, charact2));
 		}
 	}
 }
@@ -236,7 +243,7 @@ TSimplePMwithConstraints::choose_optimal_to_trisect() {
 		}
 	}
 
-	THyperinterval& hyp = F_intervals[id_optimal_hyp];
+	/* THyperinterval& hyp = F_intervals[id_optimal_hyp];
 
 	EncodedCoordinates a(F_dimension);
 	EncodedCoordinates b(F_dimension);
@@ -261,7 +268,7 @@ TSimplePMwithConstraints::choose_optimal_to_trisect() {
 		<< " C: " << evals[1] * (double)MAX_POWER_THREE * (double)MAX_POWER_THREE;
 
 	std::cout << " (" << F_evaluations[hyp.get_idEvaluationsA()] << ';'
-		<< F_evaluations[hyp.get_idEvaluationsB()] << ')' << std::endl;
+		<< F_evaluations[hyp.get_idEvaluationsB()] << ')' << std::endl; */
 
 	return id_optimal_hyp;
 }
@@ -283,13 +290,11 @@ TSimplePMwithConstraints::launch_method() {
 	out.open("D:\\materials\\projects\\visual_hyperinterval\\minimums.txt");
 	if (out.is_open()) {
 		bool flag = true;
-		for (uint i = 0; (i < 100) && (flag); ++i) {
+		for (uint i = 0; ((i < 200) && (flag)); ++i) {
 			id_current_interval = do_step(id_current_interval);
 			THyperinterval& hyp = F_intervals[id_current_interval];
-
-			if (F_intervals[id_current_interval].get_diagonal() < eps * F_criticalSize) flag = false;
-			if (std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]) < F_current_minimum)
-				F_current_minimum = std::min(F_evaluations[hyp.get_idEvaluationsA()], F_evaluations[hyp.get_idEvaluationsB()]);
+			if (std::abs(F_current_minimum + 1.48768) < eps) flag = false;
+			// if (F_intervals[id_current_interval].get_diagonal() < eps * F_criticalSize) flag = false;
 			out << F_current_minimum << std::endl;
 		}
 

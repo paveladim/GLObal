@@ -7,7 +7,6 @@ struct TPoint {
 	uint F_idThis; //ѕозици€ точки в хранилище Fpoints
 	static uint F_dimension; // размерность задачи
 	static uint F_constraints; // размерность ограничений
-	// static uint F_xxxx; //????
 	std::vector<std::list<uint>> inc_coords; //¬ектор списков на порождЄнные точки в сторону увеличени€ координат
 	std::vector<std::list<uint>> dec_coords; //¬ектор списков на порождЄнные точки в сторону уменьшени€ координат    
 

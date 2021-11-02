@@ -23,7 +23,7 @@ private:
 	void compute_localLipshConst(const uint& id_Hyp);
 	void update_globalLipshEval(const uint& id_Hyp);
 	double get_mixedLipshitzEval(const THyperinterval& hyp, const uint& i);
-	void give_borders(double& l, double& r, const THyperinterval& hyp);
+	void give_borders(double& l, double& r, THyperinterval& hyp);
 	void check_ifAllCharAreInfty();
 	// обновить характеристики всех гиперинтервалов
 	void update_all_characteristics();
@@ -41,7 +41,6 @@ public:
 							 const double& beta,
 							 const double& _eps
 	                         );
-	virtual double get_critical_size() { return F_criticalSize; }
 	void launch_method() override;
 };
 

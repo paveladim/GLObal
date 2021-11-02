@@ -10,7 +10,8 @@ THyperinterval::THyperinterval() :
 				F_idPointB(0), 
 				F_divisions(0),
 				F_characteristic(0.0), 
-				F_diagonal(0.0) {
+				F_diagonal(0.0),
+				does_changeGloMin(true) {
 	F_localsLipshEvaluations.resize(F_constraints + 1);
 	F_maxLocalLipshEvaluations.resize(F_constraints + 1);
 	for (auto& elem : F_maxLocalLipshEvaluations) elem = 0.0;

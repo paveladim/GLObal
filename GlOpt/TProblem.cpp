@@ -11,18 +11,15 @@ TProblem::TProblem(uint dim, uint constrCount, const CoordinatesValues& left_brd
 
 CoordinatesValues& TProblem::decode_coordinates(const EncodedCoordinates& out)
 {
-    size_t i{ 0 };
     CoordinatesValues& left = F_left_borders;
     CoordinatesValues& right = F_right_borders;
 
-    auto doOperation = [&i, left, right](uint ix)
-    {
-        return left[i] + (right[i] - left[i]) *
-            (((CoordinateValue)ix) / MAX_POWER_THREE);
-    };
+    for (uint i = 0; i < F_dimension; ++i) {
+        Fx_tmp[i] = (double)out[i] / (double)MAX_POWER_THREE;
+        Fx_tmp[i] = Fx_tmp[i] * (right[i] - left[i]) + left[i];
+    }
 
-    std::transform(out.begin(), out.end(), Ffuncs_tmp.begin(), doOperation);
-    return Ffuncs_tmp;
+    return Fx_tmp;
 }
 
 FunctionsValues& TProblem::F(const CoordinatesValues& out)
