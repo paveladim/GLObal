@@ -90,12 +90,12 @@ TSimplePMwithConstraints::compute_characteristic(const uint& id_Hyp) {
 	double h2 = (double)HYPER_INTERVAL_SIDE_LENGTHS[20 - index - 1];
 	double e = 0.5 * sqrt((F_dimension - j) * h1 * h1 + j * h2 * h2);
 
-	t_min = t_min / (2 * e);
+	t_min = t_min / e;
 	double left = -e;
 	double right = e;
 	give_borders(left, right, hyp);
 
-	if (left == e) {
+	if ((left == e) && (right == -e)) {
 		hyp.set_characteristic(std::numeric_limits<double>::max());
 	}
 	else {
@@ -290,14 +290,28 @@ TSimplePMwithConstraints::launch_method() {
 	out.open("D:\\materials\\projects\\visual_hyperinterval\\minimums.txt");
 	if (out.is_open()) {
 		bool flag = true;
-		for (uint i = 0; ((i < 200) && (flag)); ++i) {
+		for (uint i = 0; ((i < 250) && (flag)); ++i) {
 			id_current_interval = do_step(id_current_interval);
 			THyperinterval& hyp = F_intervals[id_current_interval];
-			if (std::abs(F_current_minimum + 1.48768) < eps) flag = false;
-			// if (F_intervals[id_current_interval].get_diagonal() < eps * F_criticalSize) flag = false;
+			
+			/*if ((F_intervals[id_current_interval].get_diagonal() /
+				((double)MAX_POWER_THREE * (double)MAX_POWER_THREE)) < eps)
+				flag = false; */
+
+			if ((F_current_minimum < -0.80467) &&
+				(std::abs(F_current_minimum + 0.80467) < eps)) flag = false;
 			out << F_current_minimum << std::endl;
 		}
 
 		std::cout << "Current minimum: " << F_current_minimum << std::endl;
+		EncodedCoordinates ec(F_dimension);
+		TPoint& point = F_points[F_id_current_minimum];
+		for (uint i = 0; i < F_dimension; ++i)
+			ec[i] = F_coords[point.get_id_coord() + i];
+		CoordinatesValues dc = Fp.decode_coordinates(ec);
+		std::cout << "Point: " << std::endl;
+		for (uint i = 0; i < F_dimension; ++i)
+			std::cout << dc[i] << std::endl;
+		std::cout << "Num of evaluations: " << F_generated_points << std::endl;
 	}
 }

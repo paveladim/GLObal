@@ -181,8 +181,14 @@ void TMethodDivByThree::compute_evaluations(const uint& out_idPoint) {
 	FunctionsValues& evals = Fp(transit_coord_2);
 
 	if (evals[0] < F_current_minimum) {
-		F_current_minimum = evals[0];
-		F_id_current_minimum = point.get_id_evaluations();
+		bool flag = true;
+		for (uint i = 0; i < F_constraints; ++i)
+			if (evals[i + 1] > 0) flag = false;
+
+		if (flag) {
+			F_current_minimum = evals[0];
+			F_id_current_minimum = out_idPoint;
+		}
 	}
 
 	for (uint i = 0; i < F_constraints + 1; ++i)
