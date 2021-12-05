@@ -104,6 +104,10 @@ uint Hyperinterval::get_axis() const {
 	return _divisions % _dimension;
 }
 
+uint Hyperinterval::get_previous_axis() const {
+	return (_divisions - 1) % _dimension;
+}
+
 uint Hyperinterval::get_shift() const {
 	return MAX_EXPONENT_THREE - 1 - _divisions / _dimension;
 }

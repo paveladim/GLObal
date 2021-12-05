@@ -11,6 +11,20 @@ private:
 	void calculate_characteristic(const uint& id_hyp) override;
 	uint optimal_to_trisect() override;
 	uint iterate(const uint& id_hyp) override;
+private:
+	void calculate_and_project(const EncodedCoordinates& out,
+							   std::vector<double>& incs,
+							   const uint& axis);
+	double scalar_product(const std::vector<double>& a,
+						  const std::vector<double>& b);
+	void generate_simplex_table(std::vector<std::vector<double>>& A,
+								const std::vector<double>& incs);
+	void generate_right_part(std::vector<double>& b,
+							 const uint& function,
+							 const uint& eval_a,
+							 const uint& eval_v,
+							 const uint& eval_u,
+							 const uint& eval_b);
 public:
 };
 
