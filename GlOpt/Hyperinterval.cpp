@@ -67,6 +67,14 @@ uint Hyperinterval::get_coordB() const {
 	return _idB * _dimension;
 }
 
+uint Hyperinterval::get_evalA() const {
+	return _idA * (_constraints + 1);
+}
+
+uint Hyperinterval::get_evalB() const {
+	return _idB * (_constraints + 1);
+}
+
 double Hyperinterval::get_charact(const bool& mode) const {
 	if (mode) return _diagonal;
 	return _charact;
@@ -110,6 +118,10 @@ uint Hyperinterval::get_previous_axis() const {
 
 uint Hyperinterval::get_shift() const {
 	return MAX_EXPONENT_THREE - 1 - _divisions / _dimension;
+}
+
+double Hyperinterval::get_diagonal() const {
+	return _diagonal;
 }
 
 void Hyperinterval::update_localLipQueues(std::vector<LipschitzConstantValue>& new_llcv,

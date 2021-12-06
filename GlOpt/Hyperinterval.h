@@ -48,6 +48,9 @@ public:
 	// получить начало хранения координат точки главной диагонали
 	uint get_coordA() const;
 	uint get_coordB() const;
+	// получить начало хранения измерений в точках главной диагонали
+	uint get_evalA() const;
+	uint get_evalB() const;
 	// получить значение характеристики гиперинтервала
 	double get_charact(const bool& = false) const;
 
@@ -71,6 +74,8 @@ public:
 	uint get_previous_axis() const;
 	// получить сдвиг вдоль координатной оси для деления гиперинтервала
 	uint get_shift() const;
+	// получить длину главной диагонали
+	double get_diagonal() const;
 
 	// обновление оценок констант Липшица, поддержка длины очереди, 
 	// вычисление максимальных оценок

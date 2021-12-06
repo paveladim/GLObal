@@ -6,11 +6,18 @@
 
 class SimplePMwithSM : protected DivideByThree {
 	bool _areAllCharInfty;
+	bool _doesGlobalChange;
+	FunctionsValues _localLipshEval;
+	FunctionsValues _globalLipshEval;
 private:
 	void calculate_localLipshConst(const uint& id_hyp);
+	void calculate_globalLipshConst(const uint& id_hyp);
 	void calculate_characteristic(const uint& id_hyp) override;
+	double mixedLipEval(const Hyperinterval& hyp, const uint& i);
+	void update_all_charact();
 	uint optimal_to_trisect() override;
 	uint iterate(const uint& id_hyp) override;
+	void solve();
 private:
 	void calculate_and_project(const EncodedCoordinates& out,
 							   std::vector<double>& incs,
@@ -25,6 +32,7 @@ private:
 							 const uint& eval_v,
 							 const uint& eval_u,
 							 const uint& eval_b);
+	void give_borders(double& l, double& r, Hyperinterval& hyp);
 public:
 };
 
