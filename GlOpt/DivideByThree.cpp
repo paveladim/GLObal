@@ -175,8 +175,8 @@ void DivideByThree::compute_evaluations(const uint& id_point) {
 	// обновление оценки минимума
 	if (evals[0] < _current_minimum) {
 		bool flag = true;
-		for (uint i = 0; i < _constraints; ++i)
-			if (evals[i + 1] > 0) flag = false;
+		for (uint i = 1; i < _constraints + 1; ++i)
+			if (evals[i] > 0) flag = false;
 
 		if (flag) {
 			_current_minimum = evals[0];

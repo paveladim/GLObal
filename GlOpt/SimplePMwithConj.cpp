@@ -16,14 +16,12 @@ void SimplePMwithConj::calculate_localLipshConst(const uint& id_hyp) {
 	Hyperinterval& hyp2 = _intervals[_generated_intervals - 2];
 	Hyperinterval& hyp3 = _intervals[_generated_intervals - 1];
 
-	uint j = hyp1.get_previous_axis() + 1;
+	uint index = 20 - (hyp1.get_divisions() - 1) / _dimension;
+	uint j = hyp1.get_previous_axis();
+	double h2 = HYPER_INTERVAL_SIDE_LENGTHS[index];
+	double h1 = sqrt(j * h2 * h2 / 9.0 + (_dimension - j - 1) * h2 * h2);
 
-	double h2 = (double)_coords[hyp3.get_coordB() + j - 1] -
-				(double)_coords[hyp1.get_coordA() + j - 1];
-	double h1 = sqrt(j * (h2 / 3.0) * (h2 / 3.0) + 
-				(_dimension - j - 1) * h2 * h2);
-
-	double e1 = 0.5 * sqrt(2 * h1 * h1);
+	double e1 = 0.5 * sqrt(h1 * h1 + h2 * h2 / 9.0);
 	double e2 = 0.5 * sqrt(h1 * h1 + h2 * h2);
 
 	for (uint i = 0; i < _constraints + 1; ++i) {
@@ -32,10 +30,8 @@ void SimplePMwithConj::calculate_localLipshConst(const uint& id_hyp) {
 		_localLipshEval[i] -= (_evaluations[hyp2.get_evalA() + i]
 							  + _evaluations[hyp2.get_evalB() + i]);
 
-		if (i == 0) {
+		if (i == 0)
 			_localLipshEval[i] = std::abs(_localLipshEval[i] / (e2 * e2 - e1 * e1));
-			std::cout << _localLipshEval[i] * (double)MAX_POWER_THREE * (double)MAX_POWER_THREE << std::endl;
-		}
 		else
 			_localLipshEval[i] = std::abs(_localLipshEval[i] / (e2 * e2 - e1 * e1));
 	}
@@ -124,11 +120,11 @@ void SimplePMwithConj::calculate_characteristic(const uint& id_hyp) {
 				   _evaluations[hyp.get_evalB()]);
 	t_min = t_min / mixed_LipshEval;
 
-	uint j = hyp.get_previous_axis() + 1;
-	double h2 = (double)_coords[hyp.get_coordB() + j - 1] -
-				(double)_coords[hyp.get_coordA() + j - 1];
-	double h1 = 3.0 * h2;
-	double e = 0.5 * sqrt(j * h2 * h2 + (_dimension - j) * h1 * h1);
+	uint index = 20 - (hyp.get_divisions() - 1) / _dimension;
+	uint j = hyp.get_previous_axis();
+	double h2 = HYPER_INTERVAL_SIDE_LENGTHS[index];
+	double h1 = sqrt(j * h2 * h2 / 9.0 + (_dimension - j - 1) * h2 * h2);
+	double e = 0.5 * sqrt(h1 * h1 + h2 * h2 / 9.0);
 
 	t_min = t_min / e;
 	double left = -e;
@@ -248,11 +244,11 @@ void SimplePMwithConj::solve() {
 		id_current_interval = iterate(id_current_interval);
 		Hyperinterval& hyp = _intervals[id_current_interval];
 
-		if (_intervals[id_current_interval].get_diagonal() < _parameters._eps)
-			flag = false;
+		/*if (_intervals[id_current_interval].get_diagonal() < _parameters._eps)
+			flag = false; */
 
-		if ((_current_minimum < 0.09768) &&
-			(std::abs(_current_minimum - 0.09768) < _parameters._eps)) flag = false;
+		if ((_current_minimum < -1.97384) &&
+			(std::abs(_current_minimum + 1.97384) < _parameters._eps)) flag = false;
 	}
 
 	std::cout << "Current minimum: " << _current_minimum << std::endl;

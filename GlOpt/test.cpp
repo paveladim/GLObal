@@ -34,12 +34,12 @@ int main() {
 	Problem testProblem6(dim_t3, cst_t3, { 0, 0 }, { 2 * M_PI, 2 * M_PI }, &task6);
 
 	double beta = 0.3;
-	double eps = sqrt(2) * 1e-16 * (double)MAX_EXPONENT_THREE;
+	double eps = 0.0001;
 	double diag = (double)MAX_POWER_THREE * (double)MAX_POWER_THREE;
 
-	Parameters param{ dim_t5, cst_t5, 3, 1.5, 2.5, 1.5, 2.5, 1e-4, beta * diag, eps};
+	Parameters param{ dim_t4, cst_t4, 3, 2.0, 2.5, 2.0, 2.5, 1e-4, beta * diag, eps};
 
-	std::shared_ptr<DivideByThree> solver(create_solver("Conjugate", dim_t5, cst_t5, param, testProblem));
+	std::shared_ptr<DivideByThree> solver(create_solver("Lagrange", 2, 1, param, testProblem));
 	solver->solve();
 	solver->write_generated_points();
 	solver->write_generated_intervals();

@@ -115,17 +115,16 @@ void SimplePMwithLagrange::calculate_characteristic(const uint& id_hyp) {
 	if (_intervals[id_hyp].get_divisions() == 0) return;
 	Hyperinterval& hyp = _intervals[id_hyp];
 
-
 	double mixed_LipshEval = mixedLipEval(hyp, 0);
 	double t_min = 0.5 * (_evaluations[hyp.get_evalA()] -
 		_evaluations[hyp.get_evalB()]);
 	t_min = t_min / mixed_LipshEval;
 
-	uint index = (hyp.get_divisions() - 1) / _dimension;
-	uint j = (hyp.get_divisions() - 1) % _dimension + 1;
-	double h1 = (double)HYPER_INTERVAL_SIDE_LENGTHS[20 - index];
-	double h2 = (double)HYPER_INTERVAL_SIDE_LENGTHS[20 - index - 1];
-	double e = 0.5 * sqrt((_dimension - j) * h1 * h1 + j * h2 * h2);
+	uint index = 20 - (hyp.get_divisions() - 1) / _dimension;
+	uint j = hyp.get_previous_axis();
+	double h2 = HYPER_INTERVAL_SIDE_LENGTHS[index];
+	double h1 = sqrt(j * h2 * h2 / 9.0 + (_dimension - j - 1) * h2 * h2);
+	double e = 0.5 * sqrt(h1 * h1 + h2 * h2 / 9.0);
 
 	t_min = t_min / e;
 	double left = -e;

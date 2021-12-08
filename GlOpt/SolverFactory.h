@@ -16,7 +16,7 @@ static DivideByThree* create_solver(const std::string& name,
 									Problem& problem) {
 	if (name == "Conjugate") return new SimplePMwithConj(dim, cst, param, problem);
 	if (name == "SimplexMethod") return new SimplePMwithSM(dim, cst, param, problem);
-	if (name == "Lagrange") return new SimplePMwithSM(dim, cst, param, problem);
+	if (name == "Lagrange") return new SimplePMwithLagrange(dim, cst, param, problem);
 	if (name == "Uniform") return new Uniform(dim, cst, param, problem);
 
 	return nullptr;
