@@ -11,13 +11,12 @@ class Point {
 	std::vector<std::list<uint>> _inc_coord;
 	//Вектор списков на порождённые точки в сторону уменьшения координат
 	std::vector<std::list<uint>> _dec_coord;
-
-	// параметры задачи
-	static uint _dimension;
-	static uint _constraints;
 public:
 	// направления изменения координат
 	enum class Direction { DECREASE, INCREASE };
+	// параметры задачи
+	static uint _dimension;
+	static uint _constraints;
 public:
 	Point();
 	uint get_id() const;

@@ -4,7 +4,7 @@
 #include "DivideByThree.h"
 #include "SimplexMethod.h"
 
-class SimplePMwithSM : protected DivideByThree {
+class SimplePMwithSM : public DivideByThree {
 	bool _areAllCharInfty;
 	bool _doesGlobalChange;
 	FunctionsValues _localLipshEval;
@@ -17,7 +17,6 @@ private:
 	void update_all_charact();
 	uint optimal_to_trisect() override;
 	uint iterate(const uint& id_hyp) override;
-	void solve();
 private:
 	void calculate_and_project(const EncodedCoordinates& out,
 							   std::vector<double>& incs,
@@ -34,6 +33,12 @@ private:
 							 const uint& eval_b);
 	void give_borders(double& l, double& r, Hyperinterval& hyp);
 public:
+	SimplePMwithSM(const uint& dimension,
+				   const uint& constraints,
+				   Parameters& parameters,
+				   Problem& problem);
+	void solve() override;
+	~SimplePMwithSM() {}
 };
 
 #endif // SIMPLEPMWITHSM_H

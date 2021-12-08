@@ -71,7 +71,10 @@ public:
                   const uint& constraints,
                   Parameters& parameters,
                   Problem& problem);
-    ~DivideByThree() {}
+    virtual void solve() = 0;
+    void write_generated_points();
+    void write_generated_intervals();
+    virtual ~DivideByThree() {}
 };
 
 #endif // DIVIDE_BY_THREE_H

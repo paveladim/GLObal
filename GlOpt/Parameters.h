@@ -11,8 +11,9 @@ struct Parameters {
 	GainLipshConstant _gainLocalCst;
 	GainLipshConstant _gainGlobalObj;
 	GainLipshConstant _gainGlobalCst;
-	double delta;
+	double _delta;
 	double _criticalSize;
+	double _eps;
 };
 
 #endif // PARAMETERS_H

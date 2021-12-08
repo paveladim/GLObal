@@ -128,15 +128,24 @@ void Hyperinterval::update_localLipQueues(std::vector<LipschitzConstantValue>& n
 										  const double& delta) {
 	for (uint i = 0; i < _constraints + 1; ++i) {
 		_localLipEvaluations[i].pop();
-		if (new_llcv[i] > delta) {
+		if (new_llcv[i] > delta)
 			_localLipEvaluations[i].push(new_llcv[i]);
-			if (new_llcv[i] > _maxLipEvaluations[i])
-				_maxLipEvaluations[i] = new_llcv[i];
-		}
-		else {
+		else
 			_localLipEvaluations[i].push(delta);
-			if (delta > _maxLipEvaluations[i])
-				_maxLipEvaluations[i] = delta;
+	}
+
+	find_maxLipEval();
+}
+
+void Hyperinterval::find_maxLipEval() {
+	LipschitzConstantValue potential_max = 0;
+	for (uint i = 0; i < _constraints + 1; ++i) {
+		for (uint j = 0; j < _queueDepth; ++j) {
+			potential_max = _localLipEvaluations[i].front();
+			_localLipEvaluations[i].pop();
+			if (_maxLipEvaluations[i] < potential_max)
+				_maxLipEvaluations[i] = potential_max;
+			_localLipEvaluations[i].push(potential_max);
 		}
 	}
 }

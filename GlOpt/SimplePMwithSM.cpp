@@ -1,4 +1,17 @@
+#include <iostream>
+#include <fstream>
+
 #include "SimplePMwithSM.h"
+
+SimplePMwithSM::SimplePMwithSM(const uint& dimension,
+							   const uint& constraints,
+							   Parameters& parameters,
+							   Problem& problem) : 
+	DivideByThree(dimension, constraints, parameters, problem),
+	_areAllCharInfty(false),
+	_doesGlobalChange(false),
+	_localLipshEval(constraints + 1),
+	_globalLipshEval(constraints + 1) {}
 
 void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 	// A, V, U, B
@@ -6,8 +19,8 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 	static std::vector<double> incs(12);
 
 	Hyperinterval& hyp1 = _intervals[id_hyp];
-	Hyperinterval& hyp2 = _intervals[_generated_intervals - 1];
-	Hyperinterval& hyp3 = _intervals[_generated_intervals - 2];
+	Hyperinterval& hyp2 = _intervals[_generated_intervals - 2];
+	Hyperinterval& hyp3 = _intervals[_generated_intervals - 1];
 
 	uint pos_a = hyp1.get_coordA();
 	uint pos_v = hyp2.get_coordA();
@@ -32,7 +45,7 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 
 	generate_simplex_table(st, incs);
 	
-	for (uint i = 0; i < _constraints; ++i) {
+	for (uint i = 0; i < _constraints + 1; ++i) {
 		generate_right_part(b, i, hyp1.get_idA() * (_constraints + 1),
 								  hyp2.get_idA() * (_constraints + 1),
 								  hyp2.get_idB() * (_constraints + 1),
@@ -44,13 +57,13 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 	}
 
 	hyp1.update_localLipQueues(_localLipshEval, 
-							   _parameters.delta / 
+							   _parameters._delta / 
 							   ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE));
 	hyp2.update_localLipQueues(_localLipshEval, 
-							   _parameters.delta / 
+							   _parameters._delta / 
 							   ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE));
 	hyp3.update_localLipQueues(_localLipshEval, 
-							   _parameters.delta / 
+							   _parameters._delta / 
 							   ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE));
 }
 
@@ -85,7 +98,12 @@ void SimplePMwithSM::calculate_and_project(const EncodedCoordinates& out,
 	std::vector<double> e1(_dimension, 0);
 	double scalar = increments[2 * _dimension + axis];
 	for (uint i = 0; i < _dimension; ++i)
-		e1[i] = increments[i + 2 * _dimension] - scalar * e1[i];
+		e1[i] = increments[i + 2 * _dimension] - scalar * e2[i];
+
+	scalar = scalar_product(e1, e1);
+	for (uint i = 0; i < _dimension; ++i)
+		e1[i] /= sqrt(scalar);
+
 
 	for (uint i = 0; i < _dimension; ++i)
 		transit[i] = increments[i];
@@ -130,6 +148,8 @@ double SimplePMwithSM::scalar_product(const std::vector<double>& a,
 
 	for (uint i = 0; i < _dimension; ++i)
 		result += a[i] * b[i];
+
+	return result;
 }
 
 void SimplePMwithSM::generate_simplex_table(std::vector<std::vector<double>>& A,
@@ -154,36 +174,35 @@ void SimplePMwithSM::generate_simplex_table(std::vector<std::vector<double>>& A,
 
 	uint i = 0;
 	uint k = 1;
-	while (i < 4)
-		for (uint j = 0; j < 6; ++j) {
-			A[6 * j][2 * i] = -incs[2 * i];
-			A[6 * j][2 * i + 1] = -incs[2 * i + 1];
-			A[6 * j][2 * i + 2 * k] = incs[2 * i];
-			A[6 * j][2 * i + 2 * k + 1] = incs[2 * i + 1];
+	for (uint j = 0; j < 6; ++j) {
+		A[6 * j][2 * i] = -incs[2 * j];
+		A[6 * j][2 * i + 1] = -incs[2 * j + 1];
+		A[6 * j][2 * k] = incs[2 * j];
+		A[6 * j][2 * k + 1] = incs[2 * j + 1];
 
-			A[6 * j + 1][2 * i] = incs[2 * i];
-			A[6 * j + 1][2 * i + 1] = incs[2 * i + 1];
-			A[6 * j + 1][2 * i + 2 * k] = -incs[2 * i];
-			A[6 * j + 1][2 * i + 2 * k + 1] = -incs[2 * i + 1];
+		A[6 * j + 1][2 * i] = incs[2 * j];
+		A[6 * j + 1][2 * i + 1] = incs[2 * j + 1];
+		A[6 * j + 1][2 * k] = -incs[2 * j];
+		A[6 * j + 1][2 * k + 1] = -incs[2 * j + 1];
 
-			A[6 * j + 2][2 * i] = -incs[2 * i];
-			A[6 * j + 2][2 * i + 1] = -incs[2 * i];
+		A[6 * j + 2][2 * i] = -incs[2 * j];
+		A[6 * j + 2][2 * i + 1] = -incs[2 * j + 1];
 
-			A[6 * j + 3][2 * i] = incs[2 * i];
-			A[6 * j + 3][2 * i + 1] = incs[2 * i];
+		A[6 * j + 3][2 * i] = incs[2 * j];
+		A[6 * j + 3][2 * i + 1] = incs[2 * j + 1];
 
-			A[6 * j + 4][2 * i + 2 * k] = incs[2 * i];
-			A[6 * j + 4][2 * i + 2 * k + 1] = incs[2 * i];
+		A[6 * j + 4][2 * k] = incs[2 * j];
+		A[6 * j + 4][2 * k + 1] = incs[2 * j + 1];
 
-			A[6 * j + 5][2 * i + 2 * k] = -incs[2 * i];
-			A[6 * j + 5][2 * i + 2 * k + 1] = -incs[2 * i];
+		A[6 * j + 5][2 * k] = -incs[2 * j];
+		A[6 * j + 5][2 * k + 1] = -incs[2 * j + 1];
 
-			++k;
-			if (k + i > 3) {
-				++i;
-				k = 1;
-			}
+		++k;
+		if (k * 2 == 8) {
+			++i;
+			k = i + 1;
 		}
+	}
 }
 
 void SimplePMwithSM::generate_right_part(std::vector<double>& b,
@@ -421,5 +440,34 @@ uint SimplePMwithSM::iterate(const uint& id_hyp) {
 }
 
 void SimplePMwithSM::solve() {
+	initialization();
+	uint id_current_interval = 0;
+	std::ofstream out;
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\minimums.txt");
+	if (out.is_open()) {
+		bool flag = true;
+		for (uint i = 0; ((i < 250) && (flag)); ++i) {
+			id_current_interval = iterate(id_current_interval);
+			Hyperinterval& hyp = _intervals[id_current_interval];
 
+			/*if ((F_intervals[id_current_interval].get_diagonal() /
+				((double)MAX_POWER_THREE * (double)MAX_POWER_THREE)) < eps)
+				flag = false; */
+
+			/*if ((_current_minimum < -0.80467) &&
+				(std::abs(F_current_minimum + 0.80467) < eps)) flag = false;
+			out << F_current_minimum << std::endl; */
+		}
+
+		std::cout << "Current minimum: " << _current_minimum << std::endl;
+		EncodedCoordinates ec(_dimension);
+		Point& point = _points[_id_minimum];
+		for (uint i = 0; i < _dimension; ++i)
+			ec[i] = _coords[point.get_id_coord() + i];
+		CoordinatesValues dc = _problem.decode_coordinates(ec);
+		std::cout << "Point: " << std::endl;
+		for (uint i = 0; i < _dimension; ++i)
+			std::cout << dc[i] << std::endl;
+		std::cout << "Num of evaluations: " << _generated_points << std::endl;
+	}
 }

@@ -82,6 +82,9 @@ public:
 	void update_localLipQueues(std::vector<LipschitzConstantValue>&, 
 							   const double&);
 
+	// найти максимальную оценку константы Липшица
+	void find_maxLipEval();
+
 	// получить значения максимальных оценок констант Липшица
 	const std::vector<LipschitzConstantValue>& get_maxLipshEvaluations() const;
 };

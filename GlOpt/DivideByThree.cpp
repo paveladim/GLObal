@@ -1,3 +1,6 @@
+#include <iostream>
+#include <fstream>
+
 #include "DivideByThree.h"
 
 DivideByThree::DivideByThree(const uint& dimension,
@@ -14,7 +17,10 @@ DivideByThree::DivideByThree(const uint& dimension,
 	_transit2(dimension),
 	_current_minimum(std::numeric_limits<double>::max()),
 	_id_minimum(0),
-	_divided_axis(0) {}
+	_divided_axis(0) {
+	Point::_dimension = _dimension;
+	Point::_constraints = _constraints;
+}
 
 void DivideByThree::initialization() {
 	Hyperinterval::init_static(_dimension, _constraints, _parameters._queueDepth);
@@ -41,14 +47,15 @@ void DivideByThree::initialization() {
 	_intervals[0].set_idB(b.get_id());
 	_intervals[0].set_id(generate_hyp());
 	compute_diagonal(_intervals[0].get_id());
+	calculate_characteristic(0);
 }
 
 void DivideByThree::trisect_interval(const uint& id_hyp) {
 	Hyperinterval& div = _intervals[id_hyp];
-	Point& point_a = _points[div.get_idA() * _dimension];
-	Point& point_b = _points[div.get_idB() * _dimension];
-	uint pos_a = div.get_idA();
-	uint pos_b = div.get_idB();
+	uint pos_a = div.get_coordA();
+	uint pos_b = div.get_coordB();
+	Point& point_a = _points[div.get_idA()];
+	Point& point_b = _points[div.get_idB()];
 
 	// по какой оси будем разбивать гиперинтервал?
 	_divided_axis = div.get_axis();
@@ -62,43 +69,24 @@ void DivideByThree::trisect_interval(const uint& id_hyp) {
 	uint pos = div.get_shift();
 	// новая координата порождённой точки u по делимой оси
 	EncodedCoordinate new_coord_u = 
-		_transit2[_divided_axis] - HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
-	Point::Direction direction_u = Point::Direction::DECREASE;
+		_transit1[_divided_axis] + HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
+	Point::Direction direction_u = Point::Direction::INCREASE;
 	// новая координата порождённой точки v по делимой оси
 	EncodedCoordinate new_coord_v = 
-		_transit2[_divided_axis] + HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
-	Point::Direction direction_v = Point::Direction::INCREASE;
+		_transit2[_divided_axis] - HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
+	Point::Direction direction_v = Point::Direction::DECREASE;
 
 	if (_transit1[_divided_axis] > _transit2[_divided_axis]) {
-		new_coord_u = _transit2[_divided_axis] + 
+		new_coord_u = _transit1[_divided_axis] - 
 					  HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
-		direction_u = Point::Direction::INCREASE;
-		new_coord_v = _transit1[_divided_axis] - 
+		direction_u = Point::Direction::DECREASE;
+		new_coord_v = _transit2[_divided_axis] + 
 					  HYPER_INTERVAL_DOUBLE_SIDE_LENGTHS[pos];
-		direction_v = Point::Direction::DECREASE;
+		direction_v = Point::Direction::INCREASE;
 	}
 
-	// порождаем точку u от точки b
-	uint new_id_u = point_b.does_point_exist(new_coord_u, 
-											 direction_u, 
-											 _divided_axis, 
-											 _coords);
-	// если точка не нашлась, то порождаем новую
-	if (new_id_u == 0) {
-		new_id_u = generate_id();
-		resize_points_deque();
-		resize_coords_deque();
-		_points[new_id_u].set_id(new_id_u);
-		for (uint i = 0; i < _dimension; ++i)
-			_coords[_points[new_id_u].get_id_coord() + i] = _transit2[i];
-
-		_coords[_points[new_id_u].get_id_coord() + _divided_axis] = new_coord_u;
-		compute_evaluations(new_id_u);
-		point_b.connect_points(new_id_u, _divided_axis, direction_u);
-	}
-
-	// порождаем точку v от точки a
-	uint new_id_v = point_a.does_point_exist(new_coord_v, 
+	// порождаем точку v от точки b
+	uint new_id_v = point_b.does_point_exist(new_coord_v, 
 											 direction_v, 
 											 _divided_axis, 
 											 _coords);
@@ -109,11 +97,30 @@ void DivideByThree::trisect_interval(const uint& id_hyp) {
 		resize_coords_deque();
 		_points[new_id_v].set_id(new_id_v);
 		for (uint i = 0; i < _dimension; ++i)
-			_coords[_points[new_id_v].get_id_coord() + i] = _transit1[i];
+			_coords[_points[new_id_v].get_id_coord() + i] = _transit2[i];
 
 		_coords[_points[new_id_v].get_id_coord() + _divided_axis] = new_coord_v;
 		compute_evaluations(new_id_v);
-		point_a.connect_points(new_id_v, _divided_axis, direction_v);
+		point_b.connect_points(new_id_v, _divided_axis, direction_v);
+	}
+
+	// порождаем точку u от точки a
+	uint new_id_u = point_a.does_point_exist(new_coord_u, 
+											 direction_u, 
+											 _divided_axis, 
+											 _coords);
+	// если точка не нашлась, то порождаем новую
+	if (new_id_u == 0) {
+		new_id_u = generate_id();
+		resize_points_deque();
+		resize_coords_deque();
+		_points[new_id_u].set_id(new_id_u);
+		for (uint i = 0; i < _dimension; ++i)
+			_coords[_points[new_id_u].get_id_coord() + i] = _transit1[i];
+
+		_coords[_points[new_id_u].get_id_coord() + _divided_axis] = new_coord_u;
+		compute_evaluations(new_id_u);
+		point_a.connect_points(new_id_u, _divided_axis, direction_u);
 	}
 
 	div.increase_divisions();
@@ -135,16 +142,16 @@ void DivideByThree::fill_intervals(Hyperinterval& parent,
 	Hyperinterval& new_hyp_2 = _intervals[pos_hyp_2];
 	Hyperinterval& new_hyp_3 = _intervals[pos_hyp_3];
 
-	parent.set_idB(id_u);
+	parent.set_idB(id_v);
 	compute_diagonal(parent.get_id());
 
 	new_hyp_2.set_id(pos_hyp_2);
-	new_hyp_2.set_idA(id_u);
-	new_hyp_2.set_idB(id_v);
+	new_hyp_2.set_idA(id_v);
+	new_hyp_2.set_idB(id_u);
 	compute_diagonal(new_hyp_2.get_id());
 
 	new_hyp_3.set_id(pos_hyp_3);
-	new_hyp_3.set_idA(id_v);
+	new_hyp_3.set_idA(id_u);
 	compute_diagonal(new_hyp_3.get_id());
 }
 
@@ -222,4 +229,28 @@ void DivideByThree::resize_evaluations_deque() {
 void DivideByThree::resize_intervals_deque() {
     if (_intervals.size() < _generated_intervals + 2)
         _intervals.resize(_intervals.size() + 100);
+}
+
+void DivideByThree::write_generated_points() {
+	std::ofstream out;
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\points.txt");
+	if (out.is_open())
+	{
+		for (uint i = 0; i < _generated_points * _dimension; ++i)
+			out << _coords[i] << std::endl;
+	}
+}
+
+void DivideByThree::write_generated_intervals() {
+	std::ofstream out;
+	out.open("D:\\materials\\projects\\visual_hyperinterval\\hyp.txt");
+	if (out.is_open())
+	{
+		for (uint id_hyp = 0; id_hyp < _generated_intervals; ++id_hyp) {
+			for (uint i = 0; i < _dimension; ++i)
+				out << _coords[_intervals[id_hyp].get_coordA() + i] << std::endl;
+			for (uint i = 0; i < _dimension; ++i)
+				out << _coords[_intervals[id_hyp].get_coordB() + i] << std::endl;
+		}
+	}
 }
