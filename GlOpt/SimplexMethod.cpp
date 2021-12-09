@@ -1,3 +1,4 @@
+#include <iostream>
 #include "SimplexMethod.h"
 
 SimplexMethod::SimplexMethod(const Vec& c, const Vec& b, const Matrix& A, 
@@ -17,6 +18,11 @@ SimplexMethod::SimplexMethod(const Vec& c, const Vec& b, const Matrix& A,
 	for (int i = 1; i < _m + 1; ++i)
 		for (int j = 1; j < _n + 1; ++j)
 			_simplex_table[i][j] = A[i - 1][j - 1];
+
+	for (int i = 1; i < _m + 1; ++i)
+		if (_simplex_table[i][0] < 0.0)
+			for (int j = 0; j < _n + 1; ++j)
+				_simplex_table[i][j] *= -1;
 
 	// basis is not detected
 	_basis.resize(_m);
@@ -144,8 +150,19 @@ void SimplexMethod::solve_imit(const int& quantity_imit) {
 			A[i - 1][j - 1] = _simplex_table[i][j];
 
 	int for_basis_columns = 0;
-	for (int j = _n; j < c.size(); ++j) {
-		A[for_basis_columns][j] = 1.0;
+	int j = _n;
+	while (j < c.size()) {
+		bool exist = false;
+		for (int i = 0; i < _basis.size(); ++i)
+			if (_basis[i] > -1)
+				if (_simplex_table[for_basis_columns + 1][_basis[i]] == 1)
+					exist = true;
+
+		if (!exist) {
+			A[for_basis_columns][j] = 1.0;
+			++j;
+		}
+
 		++for_basis_columns;
 	}
 
@@ -163,12 +180,21 @@ void SimplexMethod::solve_imit(const int& quantity_imit) {
 }
 
 void SimplexMethod::gauss_tranform_imit() {
-	int leading_row{ _m };
+	int leading_row{ 0 };
 	int leading_column{ _n };
 
-	while (leading_row > 0) {
+	int border{ 0 };
+	for (border = 1; 
+		(border < _n + 1) && (_simplex_table[0][border] == 0); 
+		++border);
+	--border;
+
+	while (leading_column > border) {
+		for (int i = 1; i < _m + 1; ++i)
+			if (_simplex_table[i][leading_column] == 1.0)
+				leading_row = i;
+
 		gauss_transform(leading_row, leading_column);
-		--leading_row;
 		--leading_column;
 	}
 }

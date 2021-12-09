@@ -1,6 +1,4 @@
 #include <iostream>
-#include <fstream>
-
 #include "SimplePMwithLagrange.h"
 
 SimplePMwithLagrange::SimplePMwithLagrange(const uint& dimension,
@@ -239,31 +237,26 @@ uint SimplePMwithLagrange::iterate(const uint& id_hyp) {
 void SimplePMwithLagrange::solve() {
 	initialization();
 	uint id_current_interval = 0;
-	std::ofstream out;
-	out.open("D:\\materials\\projects\\visual_hyperinterval\\minimums.txt");
-	if (out.is_open()) {
-		bool flag = true;
-		for (uint i = 0; ((i < 250) && (flag)); ++i) {
-			id_current_interval = iterate(id_current_interval);
-			Hyperinterval& hyp = _intervals[id_current_interval];
+	bool flag = true;
 
-			if (_intervals[id_current_interval].get_diagonal() < _parameters._eps)
-				flag = false; 
+	for (uint i = 0; ((i < 500) && (flag)); ++i) {
+		id_current_interval = iterate(id_current_interval);
+		Hyperinterval& hyp = _intervals[id_current_interval];
 
-				/*if ((_current_minimum < -0.80467) &&
-					(std::abs(F_current_minimum + 0.80467) < eps)) flag = false;
-				out << F_current_minimum << std::endl; */
-		}
-
-		std::cout << "Current minimum: " << _current_minimum << std::endl;
-		EncodedCoordinates ec(_dimension);
-		Point& point = _points[_id_minimum];
-		for (uint i = 0; i < _dimension; ++i)
-			ec[i] = _coords[point.get_id_coord() + i];
-		CoordinatesValues dc = _problem.decode_coordinates(ec);
-		std::cout << "Point: " << std::endl;
-		for (uint i = 0; i < _dimension; ++i)
-			std::cout << dc[i] << std::endl;
-		std::cout << "Num of evaluations: " << _generated_points << std::endl;
+		if (_intervals[id_current_interval].get_diagonal() < _parameters._eps)
+			flag = false;
 	}
+
+	if (!flag) std::cout << "STOPPED BY PRECISION" << std::endl;
+
+	std::cout << "Current minimum: " << _current_minimum << std::endl;
+	EncodedCoordinates ec(_dimension);
+	Point& point = _points[_id_minimum];
+	for (uint i = 0; i < _dimension; ++i)
+		ec[i] = _coords[point.get_id_coord() + i];
+	CoordinatesValues dc = _problem.decode_coordinates(ec);
+	std::cout << "Point: " << std::endl;
+	for (uint i = 0; i < _dimension; ++i)
+		std::cout << dc[i] << std::endl;
+	std::cout << "Num of evaluations: " << _generated_points << std::endl;
 }

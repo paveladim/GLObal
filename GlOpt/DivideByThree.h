@@ -74,6 +74,8 @@ public:
     virtual void solve() = 0;
     void write_generated_points();
     void write_generated_intervals();
+    uint get_gen() const { return _generated_points; }
+    double get_min() const { return _current_minimum; }
     virtual ~DivideByThree() {}
 };
 

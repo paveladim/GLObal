@@ -33,14 +33,69 @@ int main() {
 	Problem testProblem5(dim_t5, cst_t5, { -10, -10 }, { 10, 10 }, &task5);
 	Problem testProblem6(dim_t3, cst_t3, { 0, 0 }, { 2 * M_PI, 2 * M_PI }, &task6);
 
-	double beta = 0.3;
-	double eps = 0.0001;
-	double diag = (double)MAX_POWER_THREE * (double)MAX_POWER_THREE;
+	uint dim{ dim_t5 };
+	uint cst{ cst_t5 };
+	double localObj{ 1.5 };
+	double globalObj{ 1.5 };
+	double localCst{ 1.5 };
+	double globalCst{ 1.5 };
+	double delta{ 1e-10 };
+	double beta{ 0.3 };
+	double eps{ 1e-6 };
+	double diag{ (double)MAX_POWER_THREE };
+	eps = eps * sqrt((double)dim) * diag;
 
-	Parameters param{ dim_t4, cst_t4, 3, 2.0, 2.5, 2.0, 2.5, 1e-4, beta * diag, eps};
+	double best_min{ 10.0 };
+	uint best_chal{ 500 };
+	double bestlocalObj{ 1.5 };
+	double bestglobalObj{ 1.5 };
+	double bestlocalCst{ 1.5 };
+	double bestglobalCst{ 1.5 };
+	
+	/*while (globalObj < 4.0) {
+		while (globalCst < 4.0) {
+			while (localObj < 4.0) {
+				while (localCst < 4.0) {
+					std::cout << localObj << " " << localCst << " " << globalObj << " " << globalCst << std::endl;
+					Parameters param{ dim, cst, dep, localObj, localCst, globalObj, globalCst, delta, beta * diag, eps };
+					std::shared_ptr<DivideByThree> solver(create_solver("Lagrange", dim, cst, param, testProblem1));
+					solver->solve();
 
-	std::shared_ptr<DivideByThree> solver(create_solver("Lagrange", 2, 1, param, testProblem));
+					if (solver->get_min() < best_min) {
+						best_min = solver->get_min();
+						best_chal = solver->get_gen();
+						bestlocalObj = localObj;
+						bestglobalObj = globalObj;
+						bestlocalCst = localCst;
+						bestglobalCst = globalCst;
+					}
+
+					localCst += 0.2;
+				}
+				localCst = 1.5;
+				localObj += 0.2;
+			}
+			localObj = 1.5;
+			localCst = 1.5;
+			globalCst += 0.2;
+		}
+		localObj = 1.5;
+		localCst = 1.5;
+		globalCst = 1.5;
+		globalObj += 0.2;
+	} 
+
+	std::cout << best_chal << std::endl;
+	std::cout << best_min << std::endl;
+	std::cout << bestlocalObj << std::endl;
+	std::cout << bestlocalCst << std::endl;
+	std::cout << bestglobalObj << std::endl;
+	std::cout << bestglobalCst << std::endl; */
+
+	Parameters param{ dim, cst, dep, localObj, localCst, globalObj, globalCst, delta, beta * diag, eps };
+	std::shared_ptr<DivideByThree> solver(create_solver("SimplexMethod", dim, cst, param, testProblem));
 	solver->solve();
+
 	solver->write_generated_points();
 	solver->write_generated_intervals();
 

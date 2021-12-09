@@ -117,7 +117,7 @@ void SimplePMwithConj::calculate_characteristic(const uint& id_hyp) {
 
 	double mixed_LipshEval = mixedLipEval(hyp, 0);
 	double t_min = 0.5 * (_evaluations[hyp.get_evalA()] -
-				   _evaluations[hyp.get_evalB()]);
+						  _evaluations[hyp.get_evalB()]);
 	t_min = t_min / mixed_LipshEval;
 
 	uint index = 20 - (hyp.get_divisions() - 1) / _dimension;
@@ -240,16 +240,16 @@ void SimplePMwithConj::solve() {
 	initialization();
 	uint id_current_interval = 0;
 	bool flag = true;
-	for (uint i = 0; ((i < 250) && (flag)); ++i) {
+
+	for (uint i = 0; ((i < 500) && (flag)); ++i) {
 		id_current_interval = iterate(id_current_interval);
 		Hyperinterval& hyp = _intervals[id_current_interval];
 
-		/*if (_intervals[id_current_interval].get_diagonal() < _parameters._eps)
-			flag = false; */
-
-		if ((_current_minimum < -1.97384) &&
-			(std::abs(_current_minimum + 1.97384) < _parameters._eps)) flag = false;
+		if (_intervals[id_current_interval].get_diagonal() < _parameters._eps)
+			flag = false;
 	}
+
+	if (!flag) std::cout << "STOPPED BY PRECISION" << std::endl;
 
 	std::cout << "Current minimum: " << _current_minimum << std::endl;
 	EncodedCoordinates ec(_dimension);
