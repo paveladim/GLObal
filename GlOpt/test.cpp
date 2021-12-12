@@ -35,10 +35,10 @@ int main() {
 
 	uint dim{ dim_t5 };
 	uint cst{ cst_t5 };
-	double localObj{ 1.5 };
-	double globalObj{ 1.5 };
-	double localCst{ 1.5 };
-	double globalCst{ 1.5 };
+	double localObj{ 2.5 };
+	double globalObj{ 2.5 };
+	double localCst{ 2.5 };
+	double globalCst{ 2.5 };
 	double delta{ 1e-10 };
 	double beta{ 0.3 };
 	double eps{ 1e-6 };

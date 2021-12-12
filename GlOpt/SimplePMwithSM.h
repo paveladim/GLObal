@@ -2,7 +2,7 @@
 #define SIMPLEPMWITHSM_H
 
 #include "DivideByThree.h"
-#include "SimplexMethod.h"
+#include "SimplexMethod_.h"
 
 class SimplePMwithSM : public DivideByThree {
 	bool _areAllCharInfty;

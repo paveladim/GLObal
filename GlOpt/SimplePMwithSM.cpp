@@ -51,9 +51,11 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 								  hyp2.get_idB() * (_constraints + 1),
 								  hyp3.get_idB() * (_constraints + 1));
 
-		SimplexMethod sm(c, b, st);
-		sm.solve();
-		_localLipshEval[i] = sm.get_solution();
+		SimplexMethod sm(45, 36, c, b, st);
+		SimplexRes res = sm.solve();
+		_localLipshEval[i] = res._resVal;
+		if (i == 0)
+			std::cout << _localLipshEval[i] << std::endl;
 	}
 
 	hyp1.update_localLipQueues(_localLipshEval, 
@@ -154,7 +156,8 @@ double SimplePMwithSM::scalar_product(const std::vector<double>& a,
 
 void SimplePMwithSM::generate_simplex_table(std::vector<std::vector<double>>& A,
 										    const std::vector<double>& incs) {
-	for (uint i = 0; i < 36; ++i) A[i][i + 9] = 1.0;
+	A[0][9] = 1.0;
+	for (uint i = 1; i < 36; ++i) A[i][i + 9] = -1 * A[i - 1][(i - 1) + 9];
 
 	static std::vector<double> norms(6);
 	for (uint i = 0; i < 6; ++i) {
@@ -165,11 +168,11 @@ void SimplePMwithSM::generate_simplex_table(std::vector<std::vector<double>>& A,
 
 	for (uint i = 0; i < 6; ++i) {
 		A[6 * i][8] = -norms[i];
-		A[6 * i + 1][8] = -norms[i];
+		A[6 * i + 1][8] = norms[i];
 		A[6 * i + 2][8] = -0.5 * norms[i] * norms[i];
-		A[6 * i + 3][8] = -0.5 * norms[i] * norms[i];
+		A[6 * i + 3][8] = 0.5 * norms[i] * norms[i];
 		A[6 * i + 4][8] = -0.5 * norms[i] * norms[i];
-		A[6 * i + 5][8] = -0.5 * norms[i] * norms[i];
+		A[6 * i + 5][8] = 0.5 * norms[i] * norms[i];
 	}
 
 	uint i = 0;
@@ -180,19 +183,19 @@ void SimplePMwithSM::generate_simplex_table(std::vector<std::vector<double>>& A,
 		A[6 * j][2 * k] = incs[2 * j];
 		A[6 * j][2 * k + 1] = incs[2 * j + 1];
 
-		A[6 * j + 1][2 * i] = incs[2 * j];
-		A[6 * j + 1][2 * i + 1] = incs[2 * j + 1];
-		A[6 * j + 1][2 * k] = -incs[2 * j];
-		A[6 * j + 1][2 * k + 1] = -incs[2 * j + 1];
+		A[6 * j + 1][2 * i] = -incs[2 * j];
+		A[6 * j + 1][2 * i + 1] = -incs[2 * j + 1];
+		A[6 * j + 1][2 * k] = incs[2 * j];
+		A[6 * j + 1][2 * k + 1] = incs[2 * j + 1];
 
-		A[6 * j + 2][2 * i] = -incs[2 * j];
-		A[6 * j + 2][2 * i + 1] = -incs[2 * j + 1];
+		A[6 * j + 2][2 * i] = incs[2 * j];
+		A[6 * j + 2][2 * i + 1] = incs[2 * j + 1];
 
 		A[6 * j + 3][2 * i] = incs[2 * j];
 		A[6 * j + 3][2 * i + 1] = incs[2 * j + 1];
 
-		A[6 * j + 4][2 * k] = incs[2 * j];
-		A[6 * j + 4][2 * k + 1] = incs[2 * j + 1];
+		A[6 * j + 4][2 * k] = -incs[2 * j];
+		A[6 * j + 4][2 * k + 1] = -incs[2 * j + 1];
 
 		A[6 * j + 5][2 * k] = -incs[2 * j];
 		A[6 * j + 5][2 * k + 1] = -incs[2 * j + 1];
@@ -216,34 +219,34 @@ void SimplePMwithSM::generate_right_part(std::vector<double>& b,
 	double fu = _evaluations[eval_u + function];
 	double fb = _evaluations[eval_b + function];
 
-	b[2] = fa - fv;
+	b[2] = fv - fa;
 	b[3] = fv - fa;
-	b[4] = fv - fa;
+	b[4] = fa - fv;
 	b[5] = fa - fv;
 
-	b[8] = fa - fu;
+	b[8] = fu - fa;
 	b[9] = fu - fa;
-	b[10] = fu - fa;
+	b[10] = fa - fu;
 	b[11] = fa - fu;
 
-	b[14] = fa - fb;
+	b[14] = fb - fa;
 	b[15] = fb - fa;
-	b[16] = fb - fa;
+	b[16] = fa - fb;
 	b[17] = fa - fb;
 
-	b[20] = fv - fu;
+	b[20] = fu - fv;
 	b[21] = fu - fv;
-	b[22] = fu - fv;
+	b[22] = fv - fu;
 	b[23] = fv - fu;
 
-	b[26] = fv - fb;
+	b[26] = fb - fv;
 	b[27] = fb - fv;
-	b[28] = fb - fv;
+	b[28] = fv - fb;
 	b[29] = fv - fb;
 
-	b[32] = fu - fb;
+	b[32] = fb - fu;
 	b[33] = fb - fu;
-	b[34] = fb - fu;
+	b[34] = fu - fb;
 	b[35] = fu - fb;
 }
 
