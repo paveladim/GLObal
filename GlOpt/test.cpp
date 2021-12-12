@@ -33,8 +33,8 @@ int main() {
 	Problem testProblem5(dim_t5, cst_t5, { -10, -10 }, { 10, 10 }, &task5);
 	Problem testProblem6(dim_t3, cst_t3, { 0, 0 }, { 2 * M_PI, 2 * M_PI }, &task6);
 
-	uint dim{ dim_t5 };
-	uint cst{ cst_t5 };
+	uint dim{ dim_t1 };
+	uint cst{ cst_t1 };
 	double localObj{ 2.5 };
 	double globalObj{ 2.5 };
 	double localCst{ 2.5 };
@@ -93,7 +93,7 @@ int main() {
 	std::cout << bestglobalCst << std::endl; */
 
 	Parameters param{ dim, cst, dep, localObj, localCst, globalObj, globalCst, delta, beta * diag, eps };
-	std::shared_ptr<DivideByThree> solver(create_solver("SimplexMethod", dim, cst, param, testProblem));
+	std::shared_ptr<DivideByThree> solver(create_solver("SimplexMethod", dim, cst, param, testProblem1));
 	solver->solve();
 
 	solver->write_generated_points();
