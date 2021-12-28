@@ -11,6 +11,11 @@ SimplePMwithLagrange::SimplePMwithLagrange(const uint& dimension,
 	_localLipshEval(constraints + 1),
 	_globalLipshEval(constraints + 1) {}
 
+void SimplePMwithLagrange::balance(double& lipshConst) const {
+	if (_iteration % 5 == 0) lipshConst *= _parameters._stochGain;
+	else lipshConst *= _parameters._stochReduce;
+}
+
 void SimplePMwithLagrange::calculate_localLipshConst(const uint& id_hyp) {
 	Hyperinterval& hyp1 = _intervals[id_hyp];
 	Hyperinterval& hyp2 = _intervals[_generated_intervals - 2];
@@ -239,7 +244,8 @@ void SimplePMwithLagrange::solve() {
 	uint id_current_interval = 0;
 	bool flag = true;
 
-	for (uint i = 0; ((i < 500) && (flag)); ++i) {
+	_iteration = 0;
+	for (; ((_iteration < 500) && (flag)); ++_iteration) {
 		id_current_interval = iterate(id_current_interval);
 		Hyperinterval& hyp = _intervals[id_current_interval];
 

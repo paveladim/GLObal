@@ -18,6 +18,7 @@ private:
 	uint iterate(const uint& id_hyp) override;
 private:
 	void give_borders(double& l, double& r, Hyperinterval& hyp);
+	void balance(double& _lipshConst) const;
 public:
 	SimplePMwithLagrange(const uint& dimension,
 						 const uint& constraints,

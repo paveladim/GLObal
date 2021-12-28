@@ -2,7 +2,7 @@
 #define SIMPLEPMWITHSM_H
 
 #include "DivideByThree.h"
-#include "SimplexMethod_.h"
+#include "SimplexMethod.h"
 
 class SimplePMwithSM : public DivideByThree {
 	bool _areAllCharInfty;
@@ -18,7 +18,7 @@ private:
 	uint optimal_to_trisect() override;
 	uint iterate(const uint& id_hyp) override;
 private:
-	void calculate_and_project(const EncodedCoordinates& out,
+	void calculate_and_project(const CoordinatesValues& out,
 							   std::vector<double>& incs,
 							   const uint& axis);
 	double scalar_product(const std::vector<double>& a,
@@ -32,6 +32,7 @@ private:
 							 const uint& eval_u,
 							 const uint& eval_b);
 	void give_borders(double& l, double& r, Hyperinterval& hyp);
+	void balance(double& _lipshConst);
 public:
 	SimplePMwithSM(const uint& dimension,
 				   const uint& constraints,

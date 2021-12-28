@@ -39,6 +39,8 @@ protected:
     uint _id_minimum;
     // какую ось будем делить
     uint _divided_axis;
+    // число итераций
+    uint _iteration;
 protected:
 	// создать первый гиперинтервал
 	void initialization();
