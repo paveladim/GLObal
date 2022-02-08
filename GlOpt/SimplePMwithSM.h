@@ -1,22 +1,13 @@
 #ifndef SIMPLEPMWITHSM_H
 #define SIMPLEPMWITHSM_H
 
-#include "DivideByThree.h"
+#include "SimplePM.h"
 #include "SimplexMethod.h"
 
-class SimplePMwithSM : public DivideByThree {
-	bool _areAllCharInfty;
-	bool _doesGlobalChange;
-	FunctionsValues _localLipshEval;
-	FunctionsValues _globalLipshEval;
+class SimplePMwithSM : public SimplePM {
 private:
-	void calculate_localLipshConst(const uint& id_hyp);
-	void calculate_globalLipshConst(const uint& id_hyp);
+	void calculate_localLipshConst(const uint& id_hyp) override;
 	void calculate_characteristic(const uint& id_hyp) override;
-	double mixedLipEval(const Hyperinterval& hyp, const uint& i);
-	void update_all_charact();
-	uint optimal_to_trisect() override;
-	uint iterate(const uint& id_hyp) override;
 private:
 	void calculate_and_project(const CoordinatesValues& out,
 							   std::vector<double>& incs,
@@ -31,14 +22,11 @@ private:
 							 const uint& eval_v,
 							 const uint& eval_u,
 							 const uint& eval_b);
-	void give_borders(double& l, double& r, Hyperinterval& hyp);
-	void balance(double& _lipshConst);
 public:
 	SimplePMwithSM(const uint& dimension,
 				   const uint& constraints,
 				   Parameters& parameters,
 				   Problem& problem);
-	void solve() override;
 	~SimplePMwithSM() {}
 };
 
