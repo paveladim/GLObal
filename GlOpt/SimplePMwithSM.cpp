@@ -5,12 +5,31 @@ SimplePMwithSM::SimplePMwithSM(const uint& dimension,
 							   const uint& constraints,
 							   Parameters& parameters,
 							   Problem& problem) :
-	SimplePM(dimension, constraints, parameters, problem) {}
+	SimplePM(dimension, constraints, parameters, problem),
+	_points(4 * _dimension),
+	_incs(6 * 2),
+	_non_proj_incs(6 * _dimension) {}
+
+void SimplePMwithSM::decode_and_save(const uint& pos, const uint& order) {
+	for (size_t i = 0; i < _dimension; ++i)
+		_transit1[i] = _coords[pos * _dimension + i];
+	CoordinatesValues& t = _problem.decode_coordinates(_transit1);
+	for (size_t i = 0; i < _dimension; ++i)
+		_points[i + _dimension * order] = t[i];
+}
+
+void SimplePMwithSM::projection(const uint& order, 
+								std::vector<double>& e1, 
+								std::vector<double>& e2) {
+	_incs[2 * order]     = scalar_product(_non_proj_incs.begin() + order * _dimension, 
+									      e1.begin());
+	_incs[2 * order + 1] = scalar_product(_non_proj_incs.begin() + order * _dimension, 
+										  e2.begin());
+}
 
 void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 	// A, V, U, B
 	static CoordinatesValues points(4 * _dimension);
-	static std::vector<double> incs(12);
 
 	Hyperinterval& hyp1 = _intervals[id_hyp];
 	Hyperinterval& hyp2 = _intervals[_generated_intervals - 2];
@@ -26,39 +45,20 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 	uint uu = _coords[pos_u * _dimension + hyp2.get_previous_axis()];
 	uint bb = _coords[pos_b * _dimension + hyp3.get_previous_axis()];
 
-	for (uint i = 0; i < _dimension; ++i)
-		_transit1[i] = _coords[pos_a * _dimension + i];
-	CoordinatesValues& t = _problem.decode_coordinates(_transit1);
-	for (uint i = 0; i < _dimension; ++i)
-		points[i] = t[i];
+	decode_and_save(pos_a, 0);
+	decode_and_save(pos_v, 1);
+	decode_and_save(pos_u, 2);
+	decode_and_save(pos_b, 3);
 
-	for (uint i = 0; i < _dimension; ++i)
-		_transit1[i] = _coords[pos_v * _dimension + i];
-	t = _problem.decode_coordinates(_transit1);
-	for (uint i = 0; i < _dimension; ++i)
-		points[i + _dimension] = t[i];
-
-	for (uint i = 0; i < _dimension; ++i)
-		_transit1[i] = _coords[pos_u * _dimension + i];
-	t = _problem.decode_coordinates(_transit1);
-	for (uint i = 0; i < _dimension; ++i)
-		points[i + 2 * _dimension] = t[i];
-
-	for (uint i = 0; i < _dimension; ++i)
-		_transit1[i] = _coords[pos_b * _dimension + i];
-	t = _problem.decode_coordinates(_transit1);
-	for (uint i = 0; i < _dimension; ++i)
-		points[i + 3 * _dimension] = t[i];
-
-	calculate_and_project(points, incs, hyp1.get_previous_axis());
+	calculate_and_project(hyp1.get_previous_axis());
 
 	static std::vector<std::vector<double>> st(36);
-	for (auto& row : st) row.resize(45, 0);
+	for (auto& row : st) row.resize(53, 0);
 	static std::vector<double> b(36, 0);
-	static std::vector<double> c(45, 0);
-	c[8] = 1.0;
+	static std::vector<double> c(53, 0);
+	c[0] = 1.0;
 
-	generate_simplex_table(st, incs);
+	generate_simplex_table(st, _incs);
 	
 	for (uint i = 0; i < _constraints + 1; ++i) {
 		generate_right_part(b, i, pos_a * (_constraints + 1),
@@ -82,86 +82,53 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 							   ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE));
 }
 
-void SimplePMwithSM::calculate_and_project(const CoordinatesValues& out,
-									       std::vector<double>& incs,
-										   const uint& axis) {
-	static std::vector<double> increments(6 * _dimension);
-	static std::vector<double> transit(_dimension);
+void SimplePMwithSM::calculate_and_project(const uint& axis) {
 	// высчитываем приращения
 	for (uint i = 0; i < _dimension; ++i) {
 		// 21
-		increments[i] = out[i + _dimension] - out[i];
+		_non_proj_incs[i] = _points[i + _dimension] - _points[i];
 		// 31
-		increments[i + _dimension] =
-			out[i + 2 * _dimension] - out[i];
+		_non_proj_incs[i + _dimension] =
+			_points[i + 2 * _dimension] - _points[i];
 		// 41
-		increments[i + 2 * _dimension] =
-			out[i + 3 * _dimension] - out[i];
+		_non_proj_incs[i + 2 * _dimension] =
+			_points[i + 3 * _dimension] - _points[i];
 		// 32
-		increments[i + 3 * _dimension] =
-			out[i + 2 * _dimension] - out[i + _dimension];
+		_non_proj_incs[i + 3 * _dimension] =
+			_points[i + 2 * _dimension] - _points[i + _dimension];
 		// 42
-		increments[i + 4 * _dimension] =
-			out[i + 3 * _dimension] - out[i + _dimension];
+		_non_proj_incs[i + 4 * _dimension] =
+			_points[i + 3 * _dimension] - _points[i + _dimension];
 		// 43
-		increments[i + 5 * _dimension] =
-			out[i + 3 * _dimension] - out[i + 2 * _dimension];
+		_non_proj_incs[i + 5 * _dimension] =
+			_points[i + 3 * _dimension] - _points[i + 2 * _dimension];
 	}
 
 	std::vector<double> e2(_dimension, 0);
 	e2[axis] = 1;
 	std::vector<double> e1(_dimension, 0);
-	double scalar = increments[2 * _dimension + axis];
+	double scalar = _non_proj_incs[2 * _dimension + axis];
 	for (uint i = 0; i < _dimension; ++i)
-		e1[i] = increments[i + 2 * _dimension] - scalar * e2[i];
+		e1[i] = _non_proj_incs[i + 2 * _dimension] - scalar * e2[i];
 
-	scalar = scalar_product(e1, e1);
+	scalar = scalar_product(e1.begin(), e1.begin());
 	for (uint i = 0; i < _dimension; ++i)
 		e1[i] /= sqrt(scalar);
 
-	for (uint i = 0; i < _dimension; ++i)
-		transit[i] = increments[i];
-
-	incs[0] = scalar_product(transit, e1);
-	incs[1] = scalar_product(transit, e2);
-
-	for (uint i = 0; i < _dimension; ++i)
-		transit[i] = increments[i + _dimension];
-
-	incs[2] = scalar_product(transit, e1);
-	incs[3] = scalar_product(transit, e2);
-
-	for (uint i = 0; i < _dimension; ++i)
-		transit[i] = increments[i + 2 * _dimension];
-
-	incs[4] = scalar_product(transit, e1);
-	incs[5] = scalar_product(transit, e2);
-
-	for (uint i = 0; i < _dimension; ++i)
-		transit[i] = increments[i + 3 * _dimension];
-
-	incs[6] = scalar_product(transit, e1);
-	incs[7] = scalar_product(transit, e2);
-
-	for (uint i = 0; i < _dimension; ++i)
-		transit[i] = increments[i + 4 * _dimension];
-
-	incs[8] = scalar_product(transit, e1);
-	incs[9] = scalar_product(transit, e2);
-
-	for (uint i = 0; i < _dimension; ++i)
-		transit[i] = increments[i + 5 * _dimension];
-
-	incs[10] = scalar_product(transit, e1);
-	incs[11] = scalar_product(transit, e2);
+	projection(0, e1, e2);
+	projection(1, e1, e2);
+	projection(2, e1, e2);
+	projection(3, e1, e2);
+	projection(4, e1, e2);
+	projection(5, e1, e2);
 }
 
-double SimplePMwithSM::scalar_product(const std::vector<double>& a,
-									  const std::vector<double>& b) {
+double SimplePMwithSM::scalar_product(const std::vector<double>::iterator& a,
+									  const std::vector<double>::iterator& b) {
 	double result = 0.0;
 
-	for (uint i = 0; i < _dimension; ++i)
-		result += a[i] * b[i];
+	for (size_t i = 0; i < _dimension; ++i)
+		result += *(a + i) * *(b + i);
 
 	return result;
 }
