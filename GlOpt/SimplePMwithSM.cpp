@@ -8,7 +8,13 @@ SimplePMwithSM::SimplePMwithSM(const uint& dimension,
 	SimplePM(dimension, constraints, parameters, problem),
 	_points(4 * _dimension),
 	_incs(6 * 2),
-	_non_proj_incs(6 * _dimension) {}
+	_non_proj_incs(6 * _dimension),
+	_st(36),
+	_b(36),
+	_c(53) {
+	for (auto& elem : _st) elem.resize(53);
+	_c[0] = 1.0;
+}
 
 void SimplePMwithSM::decode_and_save(const uint& pos, const uint& order) {
 	for (size_t i = 0; i < _dimension; ++i)
@@ -22,15 +28,12 @@ void SimplePMwithSM::projection(const uint& order,
 								std::vector<double>& e1, 
 								std::vector<double>& e2) {
 	_incs[2 * order]     = scalar_product(_non_proj_incs.begin() + order * _dimension, 
-									      e1.begin());
+									      e2.begin());
 	_incs[2 * order + 1] = scalar_product(_non_proj_incs.begin() + order * _dimension, 
-										  e2.begin());
+										  e1.begin());
 }
 
 void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
-	// A, V, U, B
-	static CoordinatesValues points(4 * _dimension);
-
 	Hyperinterval& hyp1 = _intervals[id_hyp];
 	Hyperinterval& hyp2 = _intervals[_generated_intervals - 2];
 	Hyperinterval& hyp3 = _intervals[_generated_intervals - 1];
@@ -40,10 +43,21 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 	uint pos_u = hyp2.get_idB();
 	uint pos_b = hyp3.get_idB();
 
-	uint aa = _coords[pos_a * _dimension + hyp1.get_previous_axis()];
-	uint vv = _coords[pos_v * _dimension + hyp2.get_previous_axis()];
-	uint uu = _coords[pos_u * _dimension + hyp2.get_previous_axis()];
-	uint bb = _coords[pos_b * _dimension + hyp3.get_previous_axis()];
+	bool fl = false;
+
+	if ((_coords[pos_a * _dimension + hyp1.get_previous_axis()] < _coords[pos_v * _dimension + hyp1.get_previous_axis()]) &&
+		(_coords[pos_v * _dimension + hyp1.get_previous_axis()] < _coords[pos_u * _dimension + hyp1.get_previous_axis()]) &&
+		(_coords[pos_u * _dimension + hyp1.get_previous_axis()] < _coords[pos_b * _dimension + hyp1.get_previous_axis()])) {
+		fl = true;
+	}
+
+	if ((_coords[pos_a * _dimension + hyp1.get_previous_axis()] > _coords[pos_v * _dimension + hyp1.get_previous_axis()]) &&
+		(_coords[pos_v * _dimension + hyp1.get_previous_axis()] > _coords[pos_u * _dimension + hyp1.get_previous_axis()]) &&
+		(_coords[pos_u * _dimension + hyp1.get_previous_axis()] > _coords[pos_b * _dimension + hyp1.get_previous_axis()])) {
+		fl = true;
+	}
+
+	std::cout << fl << " ";
 
 	decode_and_save(pos_a, 0);
 	decode_and_save(pos_v, 1);
@@ -51,23 +65,17 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 	decode_and_save(pos_b, 3);
 
 	calculate_and_project(hyp1.get_previous_axis());
-
-	static std::vector<std::vector<double>> st(36);
-	for (auto& row : st) row.resize(53, 0);
-	static std::vector<double> b(36, 0);
-	static std::vector<double> c(53, 0);
-	c[0] = 1.0;
-
-	generate_simplex_table(st, _incs);
+	generate_simplex_table();
 	
 	for (uint i = 0; i < _constraints + 1; ++i) {
-		generate_right_part(b, i, pos_a * (_constraints + 1),
-								  pos_u * (_constraints + 1),
-								  pos_v * (_constraints + 1),
-								  pos_b * (_constraints + 1));
+		generate_right_part(i, pos_a * (_constraints + 1),
+							   pos_v * (_constraints + 1),
+							   pos_u * (_constraints + 1),
+							   pos_b * (_constraints + 1));
 
-		SimplexMethod sm(c, b, st);
+		SimplexMethod sm(_c, _b, _st);
 		sm.solve();
+		if (i == 0) std::cout << static_cast<int>(sm.get_state()) << std::endl;
 		_localLipshEval[i] = sm.get_solution() / ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE);
 	}
 
@@ -133,99 +141,138 @@ double SimplePMwithSM::scalar_product(const std::vector<double>::iterator& a,
 	return result;
 }
 
-void SimplePMwithSM::generate_simplex_table(std::vector<std::vector<double>>& A,
-										    const std::vector<double>& incs) {
-	A[0][9] = 1.0;
-	for (uint i = 1; i < 36; ++i) A[i][i + 9] = -1 * A[i - 1][(i - 1) + 9];
+size_t SimplePMwithSM::index(const size_t& ind) {
+	if (ind == 1) return 1;
+	if (ind == 2) return 5;
+	if (ind == 3) return 9;
+	if (ind == 4) return 13;
 
-	static std::vector<double> norms(6);
-	for (uint i = 0; i < 6; ++i) {
-		norms[i] = incs[2 * i] * incs[2 * i];
-		norms[i] += incs[2 * i + 1] * incs[2 * i + 1];
+	return -1;
+}
+
+void SimplePMwithSM::print_table() {
+	for (size_t i = 0; i < 17; ++i)
+		printf("%10.3lf", _c[i]);
+
+	printf("\n");
+
+	for (size_t j = 0; j < 36; ++j) {
+		for (size_t i = 0; i < 17; ++i) {
+			printf("%10.3lf ", _st[j][i]);
+		}
+
+		printf("%10.3lf ", _b[j]);
+		printf("\n");
 	}
+}
 
-	for (uint i = 0; i < 6; ++i) {
-		A[6 * i][8] = -norms[i];
-		A[6 * i + 1][8] = norms[i];
-		A[6 * i + 2][8] = -0.5 * norms[i];
-		A[6 * i + 3][8] = 0.5 * norms[i];
-		A[6 * i + 4][8] = -0.5 * norms[i];
-		A[6 * i + 5][8] = 0.5 * norms[i];
-	}
-
-	uint i = 0;
-	uint k = 1;
-	for (uint j = 0; j < 6; ++j) {
-		A[6 * j][2 * i] = -incs[2 * j];
-		A[6 * j][2 * i + 1] = -incs[2 * j + 1];
-		A[6 * j][2 * k] = incs[2 * j];
-		A[6 * j][2 * k + 1] = incs[2 * j + 1];
-
-		A[6 * j + 1][2 * i] = -incs[2 * j];
-		A[6 * j + 1][2 * i + 1] = -incs[2 * j + 1];
-		A[6 * j + 1][2 * k] = incs[2 * j];
-		A[6 * j + 1][2 * k + 1] = incs[2 * j + 1];
-
-		A[6 * j + 2][2 * i] = -incs[2 * j];
-		A[6 * j + 2][2 * i + 1] = -incs[2 * j + 1];
-
-		A[6 * j + 3][2 * i] = -incs[2 * j];
-		A[6 * j + 3][2 * i + 1] = -incs[2 * j + 1];
-
-		A[6 * j + 4][2 * k] = incs[2 * j];
-		A[6 * j + 4][2 * k + 1] = incs[2 * j + 1];
-
-		A[6 * j + 5][2 * k] = incs[2 * j];
-		A[6 * j + 5][2 * k + 1] = incs[2 * j + 1];
-
+void SimplePMwithSM::generate_simplex_table() {
+	size_t k{ 0 };
+	for (size_t i = 17; i < 53; ++i) {
+		_st[k][i] = 1.0;
 		++k;
-		if (k * 2 == 8) {
+	}
+
+	for (size_t i = 0; i < 6; ++i) {
+		_st[6 * i + 0][0] = -(_incs[2 * i + 0] * _incs[2 * i + 0] + _incs[2 * i + 1] * _incs[2 * i + 1]);
+		_st[6 * i + 1][0] = -(_incs[2 * i + 0] * _incs[2 * i + 0] + _incs[2 * i + 1] * _incs[2 * i + 1]);
+		_st[6 * i + 2][0] = -0.5 * (_incs[2 * i + 0] * _incs[2 * i + 0] + _incs[2 * i + 1] * _incs[2 * i + 1]);
+		_st[6 * i + 3][0] = -0.5 * (_incs[2 * i + 0] * _incs[2 * i + 0] + _incs[2 * i + 1] * _incs[2 * i + 1]);
+		_st[6 * i + 4][0] = -0.5 * (_incs[2 * i + 0] * _incs[2 * i + 0] + _incs[2 * i + 1] * _incs[2 * i + 1]);
+		_st[6 * i + 5][0] = -0.5 * (_incs[2 * i + 0] * _incs[2 * i + 0] + _incs[2 * i + 1] * _incs[2 * i + 1]);
+	}
+
+	size_t i{ 1 };
+	size_t j{ 2 };
+
+	for (size_t k = 0; k < 6; ++k) {
+		_st[6 * k + 0][index(i) + 0] = -_incs[2 * k + 0];
+		_st[6 * k + 0][index(i) + 1] = _incs[2 * k + 0];
+		_st[6 * k + 0][index(i) + 2] = -_incs[2 * k + 1];
+		_st[6 * k + 0][index(i) + 3] = _incs[2 * k + 1];
+
+		_st[6 * k + 0][index(j) + 0] = _incs[2 * k + 0];
+		_st[6 * k + 0][index(j) + 1] = -_incs[2 * k + 0];
+		_st[6 * k + 0][index(j) + 2] = _incs[2 * k + 1];
+		_st[6 * k + 0][index(j) + 3] = -_incs[2 * k + 1];
+
+		_st[6 * k + 1][index(i) + 0] = _incs[2 * k + 0];
+		_st[6 * k + 1][index(i) + 1] = -_incs[2 * k + 0];
+		_st[6 * k + 1][index(i) + 2] = _incs[2 * k + 1];
+		_st[6 * k + 1][index(i) + 3] = -_incs[2 * k + 1];
+
+		_st[6 * k + 1][index(j) + 0] = -_incs[2 * k + 0];
+		_st[6 * k + 1][index(j) + 1] = _incs[2 * k + 0];
+		_st[6 * k + 1][index(j) + 2] = -_incs[2 * k + 1];
+		_st[6 * k + 1][index(j) + 3] = _incs[2 * k + 1];
+
+		_st[6 * k + 2][index(i) + 0] = -_incs[2 * k + 0];
+		_st[6 * k + 2][index(i) + 1] = _incs[2 * k + 0];
+		_st[6 * k + 2][index(i) + 2] = -_incs[2 * k + 1];
+		_st[6 * k + 2][index(i) + 3] = _incs[2 * k + 1];
+
+		_st[6 * k + 3][index(i) + 0] = _incs[2 * k + 0];
+		_st[6 * k + 3][index(i) + 1] = -_incs[2 * k + 0];
+		_st[6 * k + 3][index(i) + 2] = _incs[2 * k + 1];
+		_st[6 * k + 3][index(i) + 3] = -_incs[2 * k + 1];
+
+		_st[6 * k + 4][index(j) + 0] = -_incs[2 * k + 0];
+		_st[6 * k + 4][index(j) + 1] = _incs[2 * k + 0];
+		_st[6 * k + 4][index(j) + 2] = -_incs[2 * k + 1];
+		_st[6 * k + 4][index(j) + 3] = _incs[2 * k + 1];
+		
+		_st[6 * k + 5][index(j) + 0] = _incs[2 * k + 0];
+		_st[6 * k + 5][index(j) + 1] = -_incs[2 * k + 0];
+		_st[6 * k + 5][index(j) + 2] = _incs[2 * k + 1];
+		_st[6 * k + 5][index(j) + 3] = -_incs[2 * k + 1];
+
+		++j;
+		if (j > 4) {
 			++i;
-			k = i + 1;
+			j = i + 1;
 		}
 	}
 }
 
-void SimplePMwithSM::generate_right_part(std::vector<double>& b,
-						 const uint& function,
-						 const uint& eval_a,
-						 const uint& eval_v,
-						 const uint& eval_u,
-						 const uint& eval_b) {
+void SimplePMwithSM::generate_right_part(const uint& function,
+										 const uint& eval_a,
+										 const uint& eval_v,
+										 const uint& eval_u,
+										 const uint& eval_b) {
 	double fa = _evaluations[eval_a + function];
 	double fv = _evaluations[eval_v + function];
 	double fu = _evaluations[eval_u + function];
 	double fb = _evaluations[eval_b + function];
 
-	b[2] = fa - fv;
-	b[3] = fa - fv;
-	b[4] = fv - fa;
-	b[5] = fv - fa;
+	_b[2] = fa - fv;
+	_b[3] = fv - fa;
+	_b[4] = fa - fv;
+	_b[5] = fv - fa;
 
-	b[8] = fa - fu;
-	b[9] = fa - fu;
-	b[10] = fu - fa;
-	b[11] = fu - fa;
+	_b[8] = fa - fu;
+	_b[9] = fu - fa;
+	_b[10] = fa - fu;
+	_b[11] = fu - fa;
 
-	b[14] = fa - fb;
-	b[15] = fa - fb;
-	b[16] = fb - fa;
-	b[17] = fb - fa;
+	_b[14] = fa - fb;
+	_b[15] = fb - fa;
+	_b[16] = fa - fb;
+	_b[17] = fb - fa;
 
-	b[20] = fv - fu;
-	b[21] = fv - fu;
-	b[22] = fu - fv;
-	b[23] = fu - fv;
+	_b[20] = fv - fu;
+	_b[21] = fu - fv;
+	_b[22] = fv - fu;
+	_b[23] = fu - fv;
 
-	b[26] = fv - fb;
-	b[27] = fv - fb;
-	b[28] = fb - fv;
-	b[29] = fb - fv;
+	_b[26] = fv - fb;
+	_b[27] = fb - fv;
+	_b[28] = fv - fb;
+	_b[29] = fb - fv;
 
-	b[32] = fu - fb;
-	b[33] = fu - fb;
-	b[34] = fb - fu;
-	b[35] = fb - fu;
+	_b[32] = fu - fb;
+	_b[33] = fb - fu;
+	_b[34] = fu - fb;
+	_b[35] = fb - fu;
 }
 
 void SimplePMwithSM::calculate_characteristic(const uint& id_hyp) {

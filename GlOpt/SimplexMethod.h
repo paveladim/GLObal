@@ -54,7 +54,7 @@ public:
 	void solve();
 	double get_solution() const { return _simplex_table[0][0]; }
 	Solution get_state() const { return _state; }
-	double get_basis_size() const { return _basis.size(); }
+	size_t get_basis_size() const { return _basis.size(); }
 	~SimplexMethod() {}
 };
 

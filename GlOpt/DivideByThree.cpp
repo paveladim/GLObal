@@ -234,7 +234,7 @@ void DivideByThree::resize_intervals_deque() {
 
 void DivideByThree::write_generated_points() {
 	std::ofstream out;
-	out.open("D:\\materials\\projects\\visual_hyperinterval\\points.txt");
+	out.open("D:\\materials\\projects\\visualize_hyperinterval\\points.txt");
 	if (out.is_open())
 	{
 		for (uint i = 0; i < _generated_points * _dimension; ++i)
@@ -244,7 +244,7 @@ void DivideByThree::write_generated_points() {
 
 void DivideByThree::write_generated_intervals() {
 	std::ofstream out;
-	out.open("D:\\materials\\projects\\visual_hyperinterval\\hyp.txt");
+	out.open("D:\\materials\\projects\\visualize_hyperinterval\\hyp.txt");
 	if (out.is_open())
 	{
 		for (uint id_hyp = 0; id_hyp < _generated_intervals; ++id_hyp) {

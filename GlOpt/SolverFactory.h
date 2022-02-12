@@ -13,19 +13,19 @@
 
 using std::shared_ptr;
 
-static shared_ptr<DivideByThree> create_solver(const std::string& name,
+static DivideByThree* create_solver(const std::string& name,
 											   const uint& dim,
 											   const uint& cst,
 											   Parameters& param,
 											   Problem& problem) {
 	if (name == "Conjugate") 
-		return std::make_shared<DivideByThree>(SimplePMwithConj(dim, cst, param, problem));
+		return new SimplePMwithConj(dim, cst, param, problem);
 	if (name == "SimplexMethod") 
-		return std::make_shared<DivideByThree>(SimplePMwithSM(dim, cst, param, problem));
+		return new SimplePMwithSM(dim, cst, param, problem);
 	if (name == "Lagrange") 
-		return std::make_shared<DivideByThree>(SimplePMwithLagrange(dim, cst, param, problem));
+		return new SimplePMwithLagrange(dim, cst, param, problem);
 	if (name == "Uniform") 
-		return std::make_shared<DivideByThree>(Uniform(dim, cst, param, problem));
+		return new Uniform(dim, cst, param, problem);
 
 	return nullptr;
 }

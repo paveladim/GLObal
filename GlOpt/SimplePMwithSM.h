@@ -9,6 +9,9 @@ private:
 	CoordinatesValues _points;
 	std::vector<double> _incs;
 	std::vector<double> _non_proj_incs;
+	Matrix _st;
+	Vec _b;
+	Vec _c;
 private:
 	void calculate_localLipshConst(const uint& id_hyp) override;
 	void calculate_characteristic(const uint& id_hyp) override;
@@ -20,14 +23,14 @@ private:
 	void calculate_and_project(const uint& axis);
 	double scalar_product(const std::vector<double>::iterator& a,
 						  const std::vector<double>::iterator& b);
-	void generate_simplex_table(std::vector<std::vector<double>>& A,
-								const std::vector<double>& incs);
-	void generate_right_part(std::vector<double>& b,
-							 const uint& function,
+	void generate_simplex_table();
+	void generate_right_part(const uint& function,
 							 const uint& eval_a,
 							 const uint& eval_v,
 							 const uint& eval_u,
 							 const uint& eval_b);
+	size_t index(const size_t& ind);
+	void print_table();
 public:
 	SimplePMwithSM(const uint& dimension,
 				   const uint& constraints,
