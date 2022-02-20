@@ -43,22 +43,6 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 	uint pos_u = hyp2.get_idB();
 	uint pos_b = hyp3.get_idB();
 
-	bool fl = false;
-
-	if ((_coords[pos_a * _dimension + hyp1.get_previous_axis()] < _coords[pos_v * _dimension + hyp1.get_previous_axis()]) &&
-		(_coords[pos_v * _dimension + hyp1.get_previous_axis()] < _coords[pos_u * _dimension + hyp1.get_previous_axis()]) &&
-		(_coords[pos_u * _dimension + hyp1.get_previous_axis()] < _coords[pos_b * _dimension + hyp1.get_previous_axis()])) {
-		fl = true;
-	}
-
-	if ((_coords[pos_a * _dimension + hyp1.get_previous_axis()] > _coords[pos_v * _dimension + hyp1.get_previous_axis()]) &&
-		(_coords[pos_v * _dimension + hyp1.get_previous_axis()] > _coords[pos_u * _dimension + hyp1.get_previous_axis()]) &&
-		(_coords[pos_u * _dimension + hyp1.get_previous_axis()] > _coords[pos_b * _dimension + hyp1.get_previous_axis()])) {
-		fl = true;
-	}
-
-	std::cout << fl << " ";
-
 	decode_and_save(pos_a, 0);
 	decode_and_save(pos_v, 1);
 	decode_and_save(pos_u, 2);
@@ -75,7 +59,6 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 
 		SimplexMethod sm(_c, _b, _st);
 		sm.solve();
-		if (i == 0) std::cout << static_cast<int>(sm.get_state()) << std::endl;
 		_localLipshEval[i] = sm.get_solution() / ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE);
 	}
 
