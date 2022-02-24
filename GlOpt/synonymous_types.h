@@ -24,4 +24,6 @@ using LipschitzConstantValue = double;
 using FeatureValue = double;
 using Vec = std::vector<double>;
 
+const double phi = 0.6180339887498948;
+
 #endif

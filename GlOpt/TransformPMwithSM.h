@@ -1,10 +1,10 @@
-#ifndef SIMPLEPMWITHSM_H
-#define SIMPLEPMWITHSM_H
+#ifndef TRANSFORMPMWITHSM_H
+#define TRANSFORMPMWITHSM_H
 
-#include "SimplePM.h"
+#include "TransformPM.h"
 #include "SimplexMethod.h"
 
-class SimplePMwithSM : public SimplePM {
+class TransformPMwithSM : public TransformPM {
 private:
 	CoordinatesValues _point;
 	std::vector<double> _incs;
@@ -30,13 +30,12 @@ private:
 							 const uint& eval_u,
 							 const uint& eval_b);
 	size_t index(const size_t& ind);
-	void print_table();
 public:
-	SimplePMwithSM(const uint& dimension,
-				   const uint& constraints,
-				   Parameters& parameters,
-				   Problem& problem);
-	~SimplePMwithSM() {}
+	TransformPMwithSM(const uint& dimension,
+					  const uint& constraints,
+					  Parameters& parameters,
+					  Problem& problem);
+	~TransformPMwithSM() {}
 };
 
-#endif // SIMPLEPMWITHSM_H
+#endif // TRANSFORMPMWITHSM_H

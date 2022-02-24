@@ -57,7 +57,7 @@ int main() {
 	} */
 
 	Parameters param{ dim, cst, dep, localObj, localCst, globalObj, globalCst, delta, beta * diag, eps, 1.5, 0.5 };
-	std::shared_ptr<DivideByThree> solver(create_solver("SimplexMethod", 2, 1, param, testProblem));
+	std::shared_ptr<DivideByThree> solver(create_solver("TransformWithSM", 2, 1, param, testProblem));
 	solver->solve();
 
 	solver->write_generated_points();

@@ -1,11 +1,10 @@
-#include <iostream>
-#include "SimplePMwithSM.h"
+#include "TransformPMwithSM.h"
 
-SimplePMwithSM::SimplePMwithSM(const uint& dimension,
-							   const uint& constraints,
-							   Parameters& parameters,
-							   Problem& problem) :
-	SimplePM(dimension, constraints, parameters, problem),
+TransformPMwithSM::TransformPMwithSM(const uint& dimension,
+									 const uint& constraints,
+									 Parameters& parameters,
+									 Problem& problem) :
+	TransformPM(dimension, constraints, parameters, problem),
 	_point(4 * _dimension),
 	_incs(6 * 2),
 	_non_proj_incs(6 * _dimension),
@@ -16,7 +15,7 @@ SimplePMwithSM::SimplePMwithSM(const uint& dimension,
 	_c[0] = 1.0;
 }
 
-void SimplePMwithSM::decode_and_save(const uint& pos, const uint& order) {
+void TransformPMwithSM::decode_and_save(const uint& pos, const uint& order) {
 	for (size_t i = 0; i < _dimension; ++i)
 		_transit1[i] = _coords[pos * _dimension + i];
 	CoordinatesValues& t = _problem.decode_coordinates(_transit1);
@@ -24,56 +23,16 @@ void SimplePMwithSM::decode_and_save(const uint& pos, const uint& order) {
 		_point[i + _dimension * order] = t[i];
 }
 
-void SimplePMwithSM::projection(const uint& order, 
-								std::vector<double>& e1, 
-								std::vector<double>& e2) {
-	_incs[2 * order]     = scalar_product(_non_proj_incs.begin() + order * _dimension, 
-									      e2.begin());
-	_incs[2 * order + 1] = scalar_product(_non_proj_incs.begin() + order * _dimension, 
-										  e1.begin());
+void TransformPMwithSM::projection(const uint& order,
+								   std::vector<double>& e1,
+								   std::vector<double>& e2) {
+	_incs[2 * order] = scalar_product(_non_proj_incs.begin() + order * _dimension,
+		e2.begin());
+	_incs[2 * order + 1] = scalar_product(_non_proj_incs.begin() + order * _dimension,
+		e1.begin());
 }
 
-void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
-	Hyperinterval& hyp1 = _intervals[id_hyp];
-	Hyperinterval& hyp2 = _intervals[_generated_intervals - 2];
-	Hyperinterval& hyp3 = _intervals[_generated_intervals - 1];
-
-	uint pos_a = hyp1.get_idA();
-	uint pos_v = hyp2.get_idA();
-	uint pos_u = hyp2.get_idB();
-	uint pos_b = hyp3.get_idB();
-
-	decode_and_save(pos_a, 0);
-	decode_and_save(pos_v, 1);
-	decode_and_save(pos_u, 2);
-	decode_and_save(pos_b, 3);
-
-	calculate_and_project(hyp1.get_previous_axis());
-	generate_simplex_table();
-	
-	for (uint i = 0; i < _constraints + 1; ++i) {
-		generate_right_part(i, pos_a * (_constraints + 1),
-							   pos_v * (_constraints + 1),
-							   pos_u * (_constraints + 1),
-							   pos_b * (_constraints + 1));
-
-		SimplexMethod sm(_c, _b, _st);
-		sm.solve();
-		_localLipshEval[i] = sm.get_solution() / ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE);
-	}
-
-	hyp1.update_localLipQueues(_localLipshEval, 
-							   _parameters._delta / 
-							   ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE));
-	hyp2.update_localLipQueues(_localLipshEval, 
-							   _parameters._delta / 
-							   ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE));
-	hyp3.update_localLipQueues(_localLipshEval, 
-							   _parameters._delta / 
-							   ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE));
-}
-
-void SimplePMwithSM::calculate_and_project(const uint& axis) {
+void TransformPMwithSM::calculate_and_project(const uint& axis) {
 	// высчитываем приращения
 	for (uint i = 0; i < _dimension; ++i) {
 		// 21
@@ -114,8 +73,8 @@ void SimplePMwithSM::calculate_and_project(const uint& axis) {
 	projection(5, e1, e2);
 }
 
-double SimplePMwithSM::scalar_product(const std::vector<double>::iterator& a,
-									  const std::vector<double>::iterator& b) {
+double TransformPMwithSM::scalar_product(const std::vector<double>::iterator& a,
+										 const std::vector<double>::iterator& b) {
 	double result = 0.0;
 
 	for (size_t i = 0; i < _dimension; ++i)
@@ -124,7 +83,7 @@ double SimplePMwithSM::scalar_product(const std::vector<double>::iterator& a,
 	return result;
 }
 
-size_t SimplePMwithSM::index(const size_t& ind) {
+size_t TransformPMwithSM::index(const size_t& ind) {
 	if (ind == 1) return 1;
 	if (ind == 2) return 5;
 	if (ind == 3) return 9;
@@ -133,23 +92,7 @@ size_t SimplePMwithSM::index(const size_t& ind) {
 	return -1;
 }
 
-void SimplePMwithSM::print_table() {
-	for (size_t i = 0; i < 17; ++i)
-		printf("%10.3lf", _c[i]);
-
-	printf("\n");
-
-	for (size_t j = 0; j < 36; ++j) {
-		for (size_t i = 0; i < 17; ++i) {
-			printf("%10.3lf ", _st[j][i]);
-		}
-
-		printf("%10.3lf ", _b[j]);
-		printf("\n");
-	}
-}
-
-void SimplePMwithSM::generate_simplex_table() {
+void TransformPMwithSM::generate_simplex_table() {
 	size_t k{ 0 };
 	for (size_t i = 17; i < 53; ++i) {
 		_st[k][i] = 1.0;
@@ -203,7 +146,7 @@ void SimplePMwithSM::generate_simplex_table() {
 		_st[6 * k + 4][index(j) + 1] = _incs[2 * k + 0];
 		_st[6 * k + 4][index(j) + 2] = -_incs[2 * k + 1];
 		_st[6 * k + 4][index(j) + 3] = _incs[2 * k + 1];
-		
+
 		_st[6 * k + 5][index(j) + 0] = _incs[2 * k + 0];
 		_st[6 * k + 5][index(j) + 1] = -_incs[2 * k + 0];
 		_st[6 * k + 5][index(j) + 2] = _incs[2 * k + 1];
@@ -217,11 +160,11 @@ void SimplePMwithSM::generate_simplex_table() {
 	}
 }
 
-void SimplePMwithSM::generate_right_part(const uint& function,
-										 const uint& eval_a,
-										 const uint& eval_v,
-										 const uint& eval_u,
-										 const uint& eval_b) {
+void TransformPMwithSM::generate_right_part(const uint& function,
+											const uint& eval_a,
+											const uint& eval_v,
+											const uint& eval_u,
+											const uint& eval_b) {
 	double fa = _evaluations[eval_a + function];
 	double fv = _evaluations[eval_v + function];
 	double fu = _evaluations[eval_u + function];
@@ -258,49 +201,55 @@ void SimplePMwithSM::generate_right_part(const uint& function,
 	_b[35] = fb - fu;
 }
 
-void SimplePMwithSM::calculate_characteristic(const uint& id_hyp) {
+void TransformPMwithSM::calculate_localLipshConst(const uint& id_hyp) {
+	Hyperinterval& hyp1 = _intervals[id_hyp];
+	Hyperinterval& hyp2 = _intervals[_generated_intervals - 2];
+	Hyperinterval& hyp3 = _intervals[_generated_intervals - 1];
+
+	uint pos_a = hyp1.get_idA();
+	uint pos_v = hyp2.get_idA();
+	uint pos_u = hyp2.get_idB();
+	uint pos_b = hyp3.get_idB();
+
+	decode_and_save(pos_a, 0);
+	decode_and_save(pos_v, 1);
+	decode_and_save(pos_u, 2);
+	decode_and_save(pos_b, 3);
+
+	calculate_and_project(hyp1.get_previous_axis());
+	generate_simplex_table();
+
+	for (uint i = 0; i < _constraints + 1; ++i) {
+		generate_right_part(i, pos_a * (_constraints + 1),
+			pos_v * (_constraints + 1),
+			pos_u * (_constraints + 1),
+			pos_b * (_constraints + 1));
+
+		SimplexMethod sm(_c, _b, _st);
+		sm.solve();
+		_localLipshEval[i] = sm.get_solution() / ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE);
+	}
+
+	hyp1.update_localLipQueues(_localLipshEval,
+		_parameters._delta /
+		((double)MAX_POWER_THREE * (double)MAX_POWER_THREE));
+	hyp2.update_localLipQueues(_localLipshEval,
+		_parameters._delta /
+		((double)MAX_POWER_THREE * (double)MAX_POWER_THREE));
+	hyp3.update_localLipQueues(_localLipshEval,
+		_parameters._delta /
+		((double)MAX_POWER_THREE * (double)MAX_POWER_THREE));
+}
+
+void TransformPMwithSM::calculate_characteristic(const uint& id_hyp) {
 	if (_intervals[id_hyp].get_divisions() == 0) return;
 	Hyperinterval& hyp = _intervals[id_hyp];
 
-	double mixed_LipshEval = mixedLipEval(hyp, 0);
-	double t_min = 0.5 * (_evaluations[hyp.get_evalA()] -
-				   _evaluations[hyp.get_evalB()]);
-	t_min = t_min / mixed_LipshEval;
+	uint index = 20 - (hyp.get_divisions() - 1) / _dimension;
+	uint j = hyp.get_previous_axis();
+	double h2 = HYPER_INTERVAL_SIDE_LENGTHS[index];
+	double h1 = sqrt(j * h2 * h2 / 9.0 + (_dimension - j - 1) * h2 * h2);
+	double e = 0.5 * sqrt(h1 * h1 + h2 * h2 / 9.0);
 
-	uint index = (hyp.get_divisions() - 1) / _dimension;
-	uint j = (hyp.get_divisions() - 1) % _dimension + 1;
-	double h1 = (double)HYPER_INTERVAL_SIDE_LENGTHS[20 - index];
-	double h2 = (double)HYPER_INTERVAL_SIDE_LENGTHS[20 - index - 1];
-	double e = 0.5 * sqrt((_dimension - j) * h1 * h1 + j * h2 * h2);
-
-	t_min = t_min / e;
-	double left = -e;
-	double right = e;
-	give_borders(left, right, hyp);
-
-	if ((left == e) && (right == -e)) {
-		hyp.set_charact(std::numeric_limits<double>::max());
-	}
-	else {
-		if ((t_min > left) && (t_min < right)) {
-			double charact = -_evaluations[hyp.get_evalA()] * (t_min - e);
-			charact = charact + _evaluations[hyp.get_evalB()] * (t_min + e);
-			charact = 0.5 * charact / e;
-			charact = charact + 0.5 * mixed_LipshEval * (t_min * t_min - e * e);
-			hyp.set_charact(charact);
-		}
-		else {
-			double charact1 = -_evaluations[hyp.get_evalA()] * (left - e);
-			charact1 = charact1 + _evaluations[hyp.get_evalB()] * (left + e);
-			charact1 = 0.5 * charact1 / e;
-			charact1 = charact1 + 0.5 * mixed_LipshEval * (left * left - e * e);
-
-			double charact2 = -_evaluations[hyp.get_evalA()] * (right - e);
-			charact2 = charact2 + _evaluations[hyp.get_evalB()] * (right + e);
-			charact2 = 0.5 * charact2 / e;
-			charact2 = charact2 + 0.5 * mixed_LipshEval * (right * right - e * e);
-
-			hyp.set_charact(std::min(charact1, charact2));
-		}
-	}
+	hyp.set_charact(golden_ratio(-e, e, e, id_hyp));
 }
