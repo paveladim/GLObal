@@ -56,6 +56,8 @@ protected:
     uint generate_hyp();
     // вычислить значение функции в точке
     void compute_evaluations(const uint& id_point);
+    // обновить оценку минимума
+    virtual void update_minimum(const FunctionsValues&, const uint&);
     // вычислить длину диагонали гиперинтервала
     void compute_diagonal(const uint& id_hyp);
     // выбрать наилучший гиперинтервал для деления

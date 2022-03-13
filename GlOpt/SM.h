@@ -1,3 +1,6 @@
+#ifndef SM_H
+#define SM_H
+
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -94,7 +97,7 @@ public:
         //if all the constraints are positive now,the table is optimal
         if (positveValueCount == C.size()) {
             isOptimal = true;
-            print();
+            //print();
         }
         return isOptimal;
     }
@@ -250,11 +253,11 @@ public:
     void CalculateSimplex() {
         bool end = false;
 
-        cout << "initial array(Not optimal)" << endl;
-        print();
+        //cout << "initial array(Not optimal)" << endl;
+        //print();
 
-        cout << " " << endl;
-        cout << "final array(Optimal solution)" << endl;
+        //cout << " " << endl;
+        //cout << "final array(Optimal solution)" << endl;
 
 
         while (!end) {
@@ -268,7 +271,7 @@ public:
 
             }
         }
-        cout << "Answers for the Constraints of variables" << endl;
+        //cout << "Answers for the Constraints of variables" << endl;
 
         for (int i = 0; i < A.size(); i++) {  //every basic column has the values, get it form B array
             int count0 = 0;
@@ -284,20 +287,20 @@ public:
 
             }
 
-            if (count0 == rows - 1) {
+            //if (count0 == rows - 1) {
 
-                cout << "variable" << index + 1 << ": " << B[index] << endl;  //every basic column has the values, get it form B array
-            }
-            else {
-                cout << "variable" << index + 1 << ": " << 0 << endl;
+            //    cout << "variable" << index + 1 << ": " << B[index] << endl;  //every basic column has the values, get it form B array
+            //}
+            //else {
+            //    cout << "variable" << index + 1 << ": " << 0 << endl;
 
-            }
+            //}
 
         }
 
 
-        cout << "" << endl;
-        cout << "maximum value: " << maximum << endl;  //print the maximum values
+        //cout << "" << endl;
+        //cout << "maximum value: " << maximum << endl;  //print the maximum values
 
 
 
@@ -305,3 +308,5 @@ public:
     }
 
 };
+
+#endif // SM_H

@@ -173,7 +173,14 @@ void DivideByThree::compute_evaluations(const uint& id_point) {
 
 	FunctionsValues& evals = _problem(_transit2);
 
-	// обновление оценки минимума
+	update_minimum(evals, id_point);
+
+	for (uint i = 0; i < _constraints + 1; ++i)
+		_evaluations[point.get_id_evaluations() + i] = evals[i];
+}
+
+void DivideByThree::update_minimum(const FunctionsValues& evals, 
+								   const uint& idp) {
 	if (evals[0] < _current_minimum) {
 		bool flag = true;
 		for (uint i = 1; i < _constraints + 1; ++i)
@@ -181,12 +188,9 @@ void DivideByThree::compute_evaluations(const uint& id_point) {
 
 		if (flag) {
 			_current_minimum = evals[0];
-			_id_minimum = id_point;
+			_id_minimum = idp;
 		}
 	}
-
-	for (uint i = 0; i < _constraints + 1; ++i)
-		_evaluations[point.get_id_evaluations() + i] = evals[i];
 }
 
 void DivideByThree::compute_diagonal(const uint& id_hyp) {

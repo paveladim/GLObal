@@ -59,6 +59,7 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 
 		SimplexMethod sm(_c, _b, _st);
 		sm.solve();
+
 		_localLipshEval[i] = sm.get_solution() / ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE);
 	}
 
@@ -263,6 +264,7 @@ void SimplePMwithSM::calculate_characteristic(const uint& id_hyp) {
 	Hyperinterval& hyp = _intervals[id_hyp];
 
 	double mixed_LipshEval = mixedLipEval(hyp, 0);
+	balance(mixed_LipshEval);
 	double t_min = 0.5 * (_evaluations[hyp.get_evalA()] -
 				   _evaluations[hyp.get_evalB()]);
 	t_min = t_min / mixed_LipshEval;

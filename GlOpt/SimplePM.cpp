@@ -76,8 +76,8 @@ void SimplePM::give_borders(double& l,
 }
 
 void SimplePM::balance(double& lipshConst) const {
-	if (_iteration % 5 == 0) lipshConst *= _parameters._stochGain;
-	else lipshConst *= _parameters._stochReduce;
+	if (_iteration % 5 == 0) lipshConst *= _parameters._Gain;
+	else lipshConst *= _parameters._Reduce;
 }
 
 void SimplePM::calculate_globalLipshConst(const uint& id_hyp) {

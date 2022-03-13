@@ -3,6 +3,7 @@
 
 #include "SimplePM.h"
 #include "SimplexMethod.h"
+#include "SM.h"
 
 class SimplePMwithSM : public SimplePM {
 private:

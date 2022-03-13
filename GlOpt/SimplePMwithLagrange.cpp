@@ -46,6 +46,7 @@ void SimplePMwithLagrange::calculate_characteristic(const uint& id_hyp) {
 	Hyperinterval& hyp = _intervals[id_hyp];
 
 	double mixed_LipshEval = mixedLipEval(hyp, 0);
+	balance(mixed_LipshEval);
 	double t_min = 0.5 * (_evaluations[hyp.get_evalA()] -
 		_evaluations[hyp.get_evalB()]);
 	t_min = t_min / mixed_LipshEval;

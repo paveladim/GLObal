@@ -16,23 +16,23 @@
 
 using std::shared_ptr;
 
-static DivideByThree* create_solver(const std::string& name,
-									const uint& dim,
-									const uint& cst,
-									Parameters& param,
-									Problem& problem) {
-	if (name == "Conjugate") 
-		return new SimplePMwithConj(dim, cst, param, problem);
-	if (name == "SimplexMethod") 
-		return new SimplePMwithSM(dim, cst, param, problem);
-	if (name == "Lagrange") 
-		return new SimplePMwithLagrange(dim, cst, param, problem);
-	if (name == "Uniform") 
-		return new Uniform(dim, cst, param, problem);
-	if (name == "TransformWithConj")
-		return new TransformPMwithConj(dim, cst, param, problem);
-	if (name == "TransformWithSM")
-		return new TransformPMwithSM(dim, cst, param, problem);
+static shared_ptr<DivideByThree> create_solver(const std::string& name,
+											   const uint& dim,
+											   const uint& cst,
+											   Parameters& param,
+											   Problem& problem) {
+	if (name == "ConjugateS")
+		return std::make_shared<SimplePMwithConj>(dim, cst, param, problem);
+	if (name == "SimplexMethodS")
+		return std::make_shared<SimplePMwithSM>(dim, cst, param, problem);
+	if (name == "LagrangeS")
+		return std::make_shared<SimplePMwithLagrange>(dim, cst, param, problem);
+	if (name == "Uniform")
+		return std::make_shared<Uniform>(dim, cst, param, problem);
+	if (name == "ConjugateT")
+		return std::make_shared<TransformPMwithConj>(dim, cst, param, problem);
+	if (name == "SimplexMethodT")
+		return std::make_shared<TransformPMwithSM>(dim, cst, param, problem);
 
 	return nullptr;
 }

@@ -8,16 +8,38 @@ TransformPM::TransformPM(const uint& dimension,
 	_areAllCharInfty(false),
 	_doesGlobalChange(false),
 	_localLipshEval(constraints + 1),
-	_globalLipshEval(constraints + 1) {}
+	_globalLipshEval(constraints + 1),
+	_residual_minimum(std::numeric_limits<double>::max()) {}
+
+//void TransformPM::update_minimum(const FunctionsValues& evals, 
+//								 const uint& idp) {
+//	double candidate1 = evals[0] - _current_minimum;
+//	double candidate2 = *std::max_element(evals.begin() + 1, evals.end());
+//
+//	candidate1 = (candidate1 > candidate2) ? candidate1 : candidate2;
+//
+//	if (candidate1 < _residual_minimum) {
+//		bool flag = true;
+//		_residual_minimum = candidate1;
+//		for (uint i = 1; i < _constraints + 1; ++i)
+//			if (evals[i] > 0) flag = false;
+//
+//		if (flag) {
+//			_current_minimum = evals[0];
+//			_id_minimum = idp;
+//		}
+//	}
+//}
 
 double TransformPM::golden_ratio(double a, 
 								 double b, 
 								 const double& e, 
 								 const uint& id_hyp) {
+	if (b < a) std::swap(a, b);
 	double x1 = b - phi * (b - a);
 	double x2 = a + phi * (b - a);
 
-	while (0.5 * (b - a) > 1e-6)
+	while (0.5 * (b - a) > 1e-10)
 		if (calculate_residual(x1, e, id_hyp) > calculate_residual(x2, e, id_hyp)) {
 			a = x1;
 			x1 = b - (x2 - a);
@@ -36,16 +58,21 @@ double TransformPM::calculate_residual(const double& t, const double& e,
 
 	size_t idx_A = hyp.get_evalA();
 	size_t idx_B = hyp.get_evalB();
+	double mixed_LipshEval = 0.0;
 
 	double result = -0.5 * (_evaluations[idx_A] - _current_minimum) * (t - e) / e;
 	result += 0.5 * (_evaluations[idx_B] - _current_minimum) * (t + e) / e;
-	result += mixedLipEval(hyp, 0) * (t * t - e * e);
+	mixed_LipshEval = mixedLipEval(hyp, 0);
+	balance(mixed_LipshEval);
+	result += mixed_LipshEval * (t * t - e * e);
 
 	double candidate = 0.0;
-	for (size_t i = 1; i < _constraints; ++i) {
+	for (size_t i = 1; i < _constraints + 1; ++i) {
 		candidate = -0.5 * _evaluations[idx_A + i] * (t - e) / e;
 		candidate += 0.5 * _evaluations[idx_B + i] * (t + e) / e;
-		candidate += mixedLipEval(hyp, i) * (t * t - e * e);
+		mixed_LipshEval = mixedLipEval(hyp, i);
+		balance(mixed_LipshEval);
+		candidate += mixed_LipshEval * (t * t - e * e);
 
 		if (result < candidate) result = candidate;
 	}
@@ -130,6 +157,11 @@ double TransformPM::mixedLipEval(const Hyperinterval& hyp, const uint& i) {
 void TransformPM::update_all_charact() {
 	for (uint i = 0; i < _generated_intervals; ++i)
 		calculate_characteristic(i);
+}
+
+void TransformPM::balance(double& lipshConst) const {
+	if (_iteration % 5 == 0) lipshConst *= _parameters._Gain;
+	else lipshConst *= _parameters._Reduce;
 }
 
 uint TransformPM::optimal_to_trisect() {

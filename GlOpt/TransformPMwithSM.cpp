@@ -221,9 +221,9 @@ void TransformPMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 
 	for (uint i = 0; i < _constraints + 1; ++i) {
 		generate_right_part(i, pos_a * (_constraints + 1),
-			pos_v * (_constraints + 1),
-			pos_u * (_constraints + 1),
-			pos_b * (_constraints + 1));
+							pos_v * (_constraints + 1),
+							pos_u * (_constraints + 1),
+							pos_b * (_constraints + 1));
 
 		SimplexMethod sm(_c, _b, _st);
 		sm.solve();
@@ -244,6 +244,23 @@ void TransformPMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 void TransformPMwithSM::calculate_characteristic(const uint& id_hyp) {
 	if (_intervals[id_hyp].get_divisions() == 0) return;
 	Hyperinterval& hyp = _intervals[id_hyp];
+	//double e = 0.0;
+
+	//size_t ida = hyp.get_coordA();
+	//size_t idb = hyp.get_coordB();
+
+	//for (size_t i = 0; i < _dimension; ++i) {
+	//	_transit1[i] = _coords[ida + i];
+	//	_transit2[i] = _coords[idb + i];
+	//}
+
+	//CoordinatesValues a{ _problem.decode_coordinates(_transit1) };
+	//CoordinatesValues b{ _problem.decode_coordinates(_transit2) };
+
+	//for (size_t i = 0; i < _dimension; ++i)
+	//	e = e + (b[i] - a[i]) * (b[i] - a[i]);
+
+	//e = 0.5 * sqrt(e);
 
 	uint index = 20 - (hyp.get_divisions() - 1) / _dimension;
 	uint j = hyp.get_previous_axis();

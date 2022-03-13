@@ -15,8 +15,8 @@ struct Parameters {
 	double _criticalSize;
 	double _eps;
 
-	GainLipshConstant _stochGain;
-	GainLipshConstant _stochReduce;
+	GainLipshConstant _Gain;
+	GainLipshConstant _Reduce;
 };
 
 #endif // PARAMETERS_H
