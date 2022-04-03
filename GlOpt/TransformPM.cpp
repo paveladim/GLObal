@@ -11,25 +11,20 @@ TransformPM::TransformPM(const uint& dimension,
 	_globalLipshEval(constraints + 1),
 	_residual_minimum(std::numeric_limits<double>::max()) {}
 
-//void TransformPM::update_minimum(const FunctionsValues& evals, 
-//								 const uint& idp) {
-//	double candidate1 = evals[0] - _current_minimum;
-//	double candidate2 = *std::max_element(evals.begin() + 1, evals.end());
-//
-//	candidate1 = (candidate1 > candidate2) ? candidate1 : candidate2;
-//
-//	if (candidate1 < _residual_minimum) {
-//		bool flag = true;
-//		_residual_minimum = candidate1;
-//		for (uint i = 1; i < _constraints + 1; ++i)
-//			if (evals[i] > 0) flag = false;
-//
-//		if (flag) {
-//			_current_minimum = evals[0];
-//			_id_minimum = idp;
-//		}
-//	}
-//}
+void TransformPM::update_minimum(const FunctionsValues& evals,
+								 const uint& idp) {
+	if (evals[0] < _current_minimum) {
+		bool flag = true;
+		for (uint i = 1; i < _constraints + 1; ++i)
+			if (evals[i] > 0) flag = false;
+
+		if (flag) {
+			_current_minimum = evals[0];
+			_id_minimum = idp;
+			update_all_charact();
+		}
+	}
+}
 
 double TransformPM::golden_ratio(double a, 
 								 double b, 

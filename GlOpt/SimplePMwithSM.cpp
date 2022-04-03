@@ -59,6 +59,10 @@ void SimplePMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 
 		SimplexMethod sm(_c, _b, _st);
 		sm.solve();
+		// double result = sm.FindSolution().resVal;
+
+		if (sm.get_state() == Solution::unlimited)
+			std::cout << "unlimited" << std::endl;
 
 		_localLipshEval[i] = sm.get_solution() / ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE);
 	}

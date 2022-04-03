@@ -33,12 +33,12 @@ int main() {
 	Problem testProblem5(dim_t5, cst_t5, { -10, -10 }, { 10, 10 }, &task5);
 	Problem testProblem6(dim_t3, cst_t3, { 0, 0 }, { 2 * M_PI, 2 * M_PI }, &task6);
 
-	uint dim{ dim_t3 };
-	uint cst{ cst_t3 };
-	double globalObj{ 2.5 };
-	double globalCst{ 2.5 };
-	double localObj{ 1.5 };
-	double localCst{ 1.5 };
+	uint dim{ dim_t5 };
+	uint cst{ cst_t5 };
+	double globalObj{ 4.0 };
+	double globalCst{ 4.0 };
+	double localObj{ 2.5 };
+	double localCst{ 2.5 };
 	double delta{ 1e-10 };
 	double beta{ 0.4 };
 	double eps{ 1e-8 };
@@ -51,7 +51,7 @@ int main() {
 	//			while (localCst < 3.0) {
 	//				std::cout << "TASK\t" << globalObj << " " << globalCst << " " << localObj << " " << localCst << endl;
 	//				Parameters param{ dim, cst, dep, localObj, localCst, globalObj, globalCst, delta, beta * diag, eps, 1.0, 1.0 };
-	//				std::shared_ptr<DivideByThree> solver(create_solver("SimplexMethodT", 2, 1, param, testProblem3));
+	//				std::shared_ptr<DivideByThree> solver(create_solver("SimplexMethodT", dim, cst, param, testProblem5));
 	//				solver->solve();
 	//				cout << "\n\n";
 	//				
@@ -74,7 +74,7 @@ int main() {
 	//}
 
 	Parameters param{ dim, cst, dep, localObj, localCst, globalObj, globalCst, delta, beta * diag, eps, 1.0, 1.0 };
-	std::shared_ptr<DivideByThree> solver(create_solver("SimplexMethodT", 2, 1, param, testProblem3));
+	std::shared_ptr<DivideByThree> solver(create_solver("SimplexMethodT", dim, cst, param, testProblem5));
 
 	solver->solve();
 	solver->write_generated_points();

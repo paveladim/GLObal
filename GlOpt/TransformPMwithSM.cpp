@@ -227,6 +227,7 @@ void TransformPMwithSM::calculate_localLipshConst(const uint& id_hyp) {
 
 		SimplexMethod sm(_c, _b, _st);
 		sm.solve();
+		//double result = sm.FindSolution().resVal;
 		_localLipshEval[i] = sm.get_solution() / ((double)MAX_POWER_THREE * (double)MAX_POWER_THREE);
 	}
 

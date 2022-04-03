@@ -33,6 +33,9 @@ private: // Fields
 	Solution _state;
 	// marker for M-method
 	bool _is_m_method;
+	// vectors for lex compare
+	Vec x1;
+	Vec x2;
 private: // Methods
 	int find_basis();
 	int detect_leading_column();
@@ -49,6 +52,7 @@ private: // Methods
 	void transform_for_basis();
 	double detect_one(const int& basis);
 	Basis get_basis() const;
+	int lex_compare(const Vec& a, const Vec& b);
 public:
 	SimplexMethod(const Vec& c, const Vec& b, const Matrix& A, const bool& m = false);
 	void solve();

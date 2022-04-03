@@ -16,7 +16,7 @@ protected:
     FunctionsValues _globalLipshEval;
     FunctionValue _residual_minimum;
 protected:
-    //void update_minimum(const FunctionsValues&, const uint&) override;
+    void update_minimum(const FunctionsValues&, const uint&) override;
 	double golden_ratio(double a, double b, const double& e, const uint& id_hyp);
 	double calculate_residual(const double& t, const double& e, const uint& id_hyp);
     virtual void calculate_localLipshConst(const uint& id_hyp) = 0;

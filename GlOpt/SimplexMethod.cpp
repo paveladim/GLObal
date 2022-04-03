@@ -5,7 +5,9 @@ SimplexMethod::SimplexMethod(const Vec& c, const Vec& b, const Matrix& A,
 	_n(c.size()), 
 	_m(b.size()),
 	_state(Solution::notfound),
-	_is_m_method(m) {
+	_is_m_method(m),
+	x1(c.size() + 1),
+	x2(c.size() + 1) {
 
 	// making the simplex table
 	_simplex_table.resize(_m + 1);
@@ -58,51 +60,58 @@ int SimplexMethod::detect_leading_column() {
 	int leading_column{ -1 };
 	double max{ 0.0 };
 
-	// Bland's rule
-	//for (int j = 1; j < _n + 1; ++j)
-	//	if (_simplex_table[0][j] > 0)
-	//		return j;
-	
-	for (int j = 1; j < _n + 1; ++j)
-		if (_simplex_table[0][j] > max) {
-			max = _simplex_table[0][j];
-			leading_column = j;
-		}
+	for (int j = 1; (j < _n + 1) && (leading_column == -1); ++j)
+		if (_simplex_table[0][j] > 0) leading_column = j;
 
-	if (leading_column > 0) return leading_column;
-	else return -1;
+	//for (int j = 1; j < _n + 1; ++j)
+	//	if (_simplex_table[0][j] > max) {
+	//		max = _simplex_table[0][j];
+	//		leading_column = j;
+	//	} 
+
+	return leading_column;
 }
 
 int SimplexMethod::detect_leading_row(const int& leading_column) {
 	int leading_row{ -1 };
-	double ratio{ std::numeric_limits<double>::max() };
+	int start = -1;
 	double temp_ratio = 0.0;
 
-	// Bland's rule
-	/*for (int i = 1; i < _m + 1; i++) {
-		if (_simplex_table[i][leading_column] > 0.0) {
-			if (leading_row == -1) {
-				leading_row = i;
-				temp_ratio = _simplex_table[i][0] / _simplex_table[i][leading_column];
-			}
-			else if ((_simplex_table[i][0] / _simplex_table[i][leading_column]) < temp_ratio) {
-				leading_row = i;
-				temp_ratio = _simplex_table[i][0] / _simplex_table[i][leading_column];
-			}
-		}
-	} */
+	Vec v1(_n + 1);
+	Vec v2(_n + 1);
 
-	for (int i = 1; i < _m + 1; ++i) {
+	for (int i = 1; (i < _m + 1) && (start == -1); ++i)
 		if (_simplex_table[i][leading_column] > 0.0) {
-			temp_ratio = _simplex_table[i][0] / _simplex_table[i][leading_column];
-			if (temp_ratio < ratio) {
-				ratio = temp_ratio;
+			start = i;
+			for (int j = 0; j < _n + 1; ++j) 
+				v1[j] = _simplex_table[start][j] / _simplex_table[start][leading_column];
+		}
+
+	if (start == -1) return leading_row;
+	leading_row = start;
+
+	for (int i = start + 1; i < _m + 1; i++) {
+		if (_simplex_table[i][leading_column] > 0.0) {
+			for (int j = 0; j < _n + 1; ++j)
+				v2[j] = _simplex_table[i][j] / _simplex_table[i][leading_column];
+
+			if (lex_compare(v1, v2) == 1) {
+				v1 = v2;
 				leading_row = i;
 			}
 		}
 	}
 
 	return leading_row;
+}
+
+int SimplexMethod::lex_compare(const Vec& a, const Vec& b) {
+	for (int i = 0; i < _n + 1; ++i) {
+		if (a[i] - b[i] > 0) return 1;
+		if (a[i] - b[i] < 0) return -1;
+	}
+
+	return 0;
 }
 
 // lr means leading row, lc means leading column
@@ -166,6 +175,12 @@ void SimplexMethod::solve_imit(const int& quantity_imit) {
 		for (int i = 1; i < _m + 1; ++i)
 			A[i - 1][j - 1] = _simplex_table[i][j];
 
+	//int k = 0;
+	//for (int j = _n; j < _n + quantity_imit; ++j) {
+	//	A[k][j] = 1.0;
+	//	++k;
+	//}
+
 	int for_basis_columns = 0;
 	int j = _n;
 	while (j < c.size()) {
@@ -182,6 +197,9 @@ void SimplexMethod::solve_imit(const int& quantity_imit) {
 
 		++for_basis_columns;
 	}
+
+	for (auto& elem : _basis)
+		if (elem > -1) c[elem] = 1.0;
 
 	SimplexMethod sm_imit(c, b, A, true);
 	sm_imit.solve();
@@ -201,20 +219,30 @@ void SimplexMethod::gauss_tranform_imit() {
 	int leading_row{ 0 };
 	int leading_column{ _n };
 
-	int border{ 0 };
-	for (border = 1;
-		(border < _n + 1) && (_simplex_table[0][border] == 0);
-		++border);
-	--border;
+	for (int i = 1; i < _n + 1; ++i)
+		if (_simplex_table[0][i] != 0) {
+			leading_column = i;
+			for (int j = 1; j < _m + 1; ++j)
+				if (_simplex_table[j][leading_column] != 0)
+					leading_row = j;
 
-	while (leading_column > border) {
-		for (int i = 1; i < _m + 1; ++i)
-			if (_simplex_table[i][leading_column] == 1.0)
-				leading_row = i;
+			gauss_transform(leading_row, leading_column);
+		}
 
-		gauss_transform(leading_row, leading_column);
-		--leading_column;
-	}
+	//int border{ 0 };
+	//for (border = 1;
+	//	(border < _n + 1) && (_simplex_table[0][border] == 0);
+	//	++border);
+	//--border;
+
+	//while (leading_column > border) {
+	//	for (int i = 1; i < _m + 1; ++i)
+	//		if (_simplex_table[i][leading_column] == 1.0)
+	//			leading_row = i;
+
+	//	gauss_transform(leading_row, leading_column);
+	//	--leading_column;
+	//}
 }
 
 int SimplexMethod::check_for_imit(const int& dim) {
